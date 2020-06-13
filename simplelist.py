@@ -19,17 +19,22 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
-def main(arguments, mailbody):
-	with open("test/args.txt", "w") as myfile:
-		myfile.write(str(arguments)+"\n")
 
-	with open("test/body.txt", "w") as myfile:
-		for line in mailbody.read():
-			myfile.write(line)
+import json
 
+def main(sys_arguments, mailbody):
+	# Local variables.
+	arguments = {}
+	configs = {}
+	cursor = None
+
+	# Convert arguments into a indexed list.
+	for argument in sys_arguments:
+		splited = argument.split("=")
+		if len(splited) == 2:
+			arguments[splited[0][2:]] = splited[1]
 #### PSEUDO PYTHON
 
-##### Converteix arguments en llista indexada.
 ##### Llegeix arxiu de configuració
 ##### Guarda el missatge original i els arguments a la carpeta del grup <llista-correu>/new.
 ##### Sí comença per "unsubscribe-*"
@@ -38,7 +43,7 @@ def main(arguments, mailbody):
 ###### subscribe(llista-correu,remitent).
 ##### oSi no s'ha complert cap de les anterior.
 ###### forward(llista-correu, missatge)
-
+	return 0
 
 def read_configuration(config_file):
 ###### on es guardaran els missatges.
