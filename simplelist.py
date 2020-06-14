@@ -19,10 +19,12 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
+""" Simple implementation mail lists with getmail and SMTP """
 
 import json
 
 def main(sys_arguments, mailbody):
+	""" Main proceure orchestrator """
 	# Local variables.
 	arguments = {}
 	configs = {}
@@ -46,26 +48,31 @@ def main(sys_arguments, mailbody):
 	return 0
 
 def read_configuration(config_file):
+	""" Read configuration JSON and returns a dictionary """
 ###### on es guardaran els missatges.
 ###### parametres de connexio a la sqlite.
 ###### parametres de connexio smtp.
 	return
 
 def store_message(storage, maillist, arguments, body):
+	""" Store the message and arguments into the mailist directory using maildir """
 ###### Guarda el missatge original i els arguments a la carpeta del grup <llista-correu>/new.
 	return
 
 def unsubscribe(database, maillist, arguments):
+	""" Remove the requester from the maillist """
 ####### Esborra'l de la base de dades.
 ####### notifica al remitent la baixa.
 	return
 
 def subscribe(database, maillist, body):
+	""" Add the requester to the maillist """
 ####### Afegeix-lo a la base de dades.
 ####### notifica al remitent l'alta.
 	return
 
 def forward(database, maillist, body):
+	""" Send reciveid mail to all users in the maillist """
 ####### busca tots els remitent a la base de dades.
 ####### Reenvia el correu a tots els destinataris.
 	return
