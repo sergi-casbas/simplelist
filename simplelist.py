@@ -36,7 +36,7 @@ def main(sys_arguments, mailbody):
 		if len(splited) == 2:
 			arguments[splited[0][2:]] = splited[1]
 
-	# Extract if exist the command from the local.
+	# Extract if exist the command from the local argument.
 	arguments['command'] = arguments['local'].split("-", 1)[0]
 
 	if arguments['command'] in 'unsubscribe, subscribe':
@@ -45,9 +45,9 @@ def main(sys_arguments, mailbody):
 		arguments['command'] = 'forward'
 		arguments['maillist'] = arguments['local']+'@'+arguments['domain']
 
-	print(arguments['command'], arguments['maillist'])
+	# Read configuration file.
+	configs = read_configuration("./default.json")
 
-	configs = read_configuration("/etc/simplelist.json")
 #### PSEUDO PYTHON
 ##### Guarda el missatge original i els arguments a la carpeta del grup <llista-correu>/new.
 ##### Sí comença per "unsubscribe-*"
@@ -59,11 +59,11 @@ def main(sys_arguments, mailbody):
 	return 0
 
 def read_configuration(config_file):
-	""" Read configuration JSON and returns a dictionary """
-###### on es guardaran els missatges.
-###### parametres de connexio a la sqlite.
-###### parametres de connexio smtp.
-	return
+	""" Read configuration JSON and returns as dictionary """
+	# read JSON
+	with open(config_file, 'r') as JSON_file:
+		configurations = json.loads(JSON_file.read())
+	return configurations
 
 def store_message(storage, maillist, arguments, body):
 	""" Store the message and arguments into the mailist directory using maildir """

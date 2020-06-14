@@ -1,0 +1,13 @@
+{
+	"storage":{
+		"directory":"/var/spool/maildir"
+	},
+	"mta":{
+		"host":"127.0.0.1",
+		"port":"25"
+	},
+	"database":{
+		"rdms":"sqlite",
+		"path":"./test/database.sqlite3"
+	}
+}
