@@ -35,9 +35,20 @@ def main(sys_arguments, mailbody):
 		splited = argument.split("=")
 		if len(splited) == 2:
 			arguments[splited[0][2:]] = splited[1]
-#### PSEUDO PYTHON
 
-##### Llegeix arxiu de configuració
+	# Extract if exist the command from the local.
+	arguments['command'] = arguments['local'].split("-", 1)[0]
+
+	if arguments['command'] in 'unsubscribe, subscribe':
+		arguments['maillist'] = arguments['local'].split("-", 1)[1]+'@'+arguments['domain']
+	else:
+		arguments['command'] = 'forward'
+		arguments['maillist'] = arguments['local']+'@'+arguments['domain']
+
+	print(arguments['command'], arguments['maillist'])
+
+	configs = read_configuration("/etc/simplelist.json")
+#### PSEUDO PYTHON
 ##### Guarda el missatge original i els arguments a la carpeta del grup <llista-correu>/new.
 ##### Sí comença per "unsubscribe-*"
 ###### unsubscribe(llista-correu,remitent).
