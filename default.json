@@ -1,6 +1,7 @@
 {
 	"storage":{
-		"directory":"/var/spool/maildir"
+		"disabled":"True",
+		"directory":"./test/maildir"
 	},
 	"mta":{
 		"host":"127.0.0.1",
