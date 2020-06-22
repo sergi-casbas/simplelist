@@ -22,6 +22,12 @@
 """ Simple implementation mail lists with getmail and SMTP """
 
 import json
+global debug_level
+
+def dprint(level, debug_message): # TO-DO Improve as class.
+	"""" Call external class dprint function """
+	from debug import dprint
+	dprint(debug_level, level, debug_message)
 
 def main(sys_arguments, mailbody):
 	""" Main proceure orchestrator """
@@ -90,4 +96,5 @@ def forward(database, maillist, body):
 
 if __name__ == '__main__':
 	import sys
+	debug_level = 7 #TO-DO read from sys.argv.
 	sys.exit(main(sys.argv, sys.stdin))
