@@ -20,8 +20,12 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 """ Simple implementation mail lists with getmail and SMTP """
-
+import os
 import json
+import time
+import random
+
+time_milliseconds = lambda: int(round(time.time() * 1000))
 global debug_level
 
 def dprint(level, debug_message): # TO-DO Improve as class.
@@ -54,27 +58,59 @@ def main(sys_arguments, mailbody):
 	# Read configuration file.
 	configs = read_configuration("./default.json")
 
-#### PSEUDO PYTHON
-##### Guarda el missatge original i els arguments a la carpeta del grup <llista-correu>/new.
-##### Sí comença per "unsubscribe-*"
-###### unsubscribe(llista-correu,remitent).
-##### oSí comença per "subscribe-*"
-###### subscribe(llista-correu,remitent).
-##### oSi no s'ha complert cap de les anterior.
-###### forward(llista-correu, missatge)
+	# Store messages to local maildir directory if not disabled.
+	if configs['storage']['disabled']:
+		dprint(7, "Messages storing is disabled")
+	else:
+		store_message(configs['storage'], arguments, sys_arguments, mailbody.read())
+
+	# Open database cursor.
+	cursor = open_database_cursor(configs['database'])
 	return 0
 
 def read_configuration(config_file):
 	""" Read configuration JSON and returns as dictionary """
 	# read JSON
+	dprint(7, f"Reading configuration file from {config_file}")
 	with open(config_file, 'r') as JSON_file:
 		configurations = json.loads(JSON_file.read())
 	return configurations
 
-def store_message(storage, maillist, arguments, body):
+def store_message(storage, arguments, sys_arguments, body):
 	""" Store the message and arguments into the mailist directory using maildir """
-###### Guarda el missatge original i els arguments a la carpeta del grup <llista-correu>/new.
-	return
+	dirlist = f"{storage['directory']}/{arguments['maillist']}"
+	messageid = time_milliseconds()+(random.random())
+
+	args_file = f"{dirlist}/args/{messageid}.simplelist"
+	body_file = f"{dirlist}/new/{messageid}.simplelist"
+
+	dprint(7, f"Storing arguments on {args_file}")
+	store_file_autocreate_parent(args_file, str(sys_arguments))
+
+	dprint(7, f"Storing email body on {body_file}")
+	store_file_autocreate_parent(body_file, body)
+
+def store_file_autocreate_parent(filename, contents):
+	""" Stores the contents into filename, autocreate parent if required s"""
+	try:
+		with open(filename, "w") as file_object:
+			file_object.write(contents)
+	except FileNotFoundError:
+		folder_path = os.path.dirname(os.path.abspath(filename))
+		dprint(6, f"Folder {folder_path} not found, creating it.")
+		os.makedirs(folder_path)
+		store_file_autocreate_parent(filename, contents)
+
+def open_database_cursor(database):
+	""" Open database based on config and return an open cursor to it """
+	cursor = None
+	if database['rdms'] == "sqlite":
+		import sqlite3
+		dprint(7, "Connection to database sqlite://" + database['path'])
+		cursor = sqlite3.connect(database['path'])
+	else:
+		raise ValueError('Wrong RDMS engine selected', database['rdms'])
+	return cursor
 
 def unsubscribe(database, maillist, arguments):
 	""" Remove the requester from the maillist """
