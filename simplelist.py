@@ -66,6 +66,20 @@ def main(sys_arguments, mailbody):
 
 	# Open database connection.
 	connection = open_connection(configs['database'])
+
+	# Execute required operation.
+	dprint(7, f"Executing {arguments['command']} command")
+	if arguments['command'] == 'unsubscribe':
+		unsubscribe(connection.cursor(), arguments['maillist'], arguments['sender'])
+	elif arguments['command'] == 'subscribe': 
+		subscribe(connection.cursor(), arguments['maillist'], arguments['sender'])
+	else:
+		forward(connection.cursor(), arguments['maillist'], mailbody.read())
+
+	# Commit any pending operation in the database.
+	connection.commit()
+	
+	# If everything is OK, return 0
 	return 0
 
 def read_configuration(config_file):
@@ -114,13 +128,17 @@ def open_connection(database):
 
 def unsubscribe(cursor, maillist, address):
 	""" Remove the requester from the maillist """
-####### Esborra'l de la base de dades.
+	sql = f"DELETE FROM subscriptions WHERE maillist='{maillist}' AND subscriptor='{address}';"
+	dprint(7,f'Executing SQL: {sql}')
+	cursor.execute(sql)
 ####### notifica al remitent la baixa.
 	return
 
 def subscribe(cursor, maillist, address):
 	""" Add the requester to the maillist """
-####### Afegeix-lo a la base de dades.
+	sql = f"INSERT INTO subscriptions VALUES ('{maillist}','{address}')"
+	dprint(7,f'Executing SQL: {sql}')
+	cursor.execute(sql)
 ####### notifica al remitent l'alta.
 	return
 
