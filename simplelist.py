@@ -38,7 +38,7 @@ def main(sys_arguments, mailbody):
 	# Local variables.
 	arguments = {}
 	configs = {}
-	cursor = None
+	connection = None
 
 	# Convert arguments into a indexed list.
 	for argument in sys_arguments:
@@ -64,8 +64,8 @@ def main(sys_arguments, mailbody):
 	else:
 		store_message(configs['storage'], arguments, sys_arguments, mailbody.read())
 
-	# Open database cursor.
-	cursor = open_database_cursor(configs['database'])
+	# Open database connection.
+	connection = open_connection(configs['database'])
 	return 0
 
 def read_configuration(config_file):
@@ -101,30 +101,30 @@ def store_file_autocreate_parent(filename, contents):
 		os.makedirs(folder_path)
 		store_file_autocreate_parent(filename, contents)
 
-def open_database_cursor(database):
+def open_connection(database):
 	""" Open database based on config and return an open cursor to it """
-	cursor = None
+	connection = None
 	if database['rdms'] == "sqlite":
 		import sqlite3
 		dprint(7, "Connection to database sqlite://" + database['path'])
-		cursor = sqlite3.connect(database['path'])
+		connection = sqlite3.connect(database['path'])
 	else:
 		raise ValueError('Wrong RDMS engine selected', database['rdms'])
-	return cursor
+	return connection
 
-def unsubscribe(database, maillist, arguments):
+def unsubscribe(cursor, maillist, address):
 	""" Remove the requester from the maillist """
 ####### Esborra'l de la base de dades.
 ####### notifica al remitent la baixa.
 	return
 
-def subscribe(database, maillist, body):
+def subscribe(cursor, maillist, address):
 	""" Add the requester to the maillist """
 ####### Afegeix-lo a la base de dades.
 ####### notifica al remitent l'alta.
 	return
 
-def forward(database, maillist, body):
+def forward(cursor, maillist, body):
 	""" Send reciveid mail to all users in the maillist """
 ####### busca tots els remitent a la base de dades.
 ####### Reenvia el correu a tots els destinataris.
