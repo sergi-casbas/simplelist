@@ -66,15 +66,16 @@ def main(sys_arguments, mailbody):
 
 	# Open database connection.
 	connection = open_connection(configs['database'])
+	mta = configs['mta']
 
 	# Execute required operation.
 	dprint(5, f"Executing {arguments['command']} command")
 	if arguments['command'] == 'unsubscribe':
-		unsubscribe(connection.cursor(), arguments['maillist'], arguments['sender'])
+		unsubscribe(connection.cursor(),mta , arguments['maillist'], arguments['sender'])
 	elif arguments['command'] == 'subscribe': 
-		subscribe(connection.cursor(), arguments['maillist'], arguments['sender'])
+		subscribe(connection.cursor(),mta , arguments['maillist'], arguments['sender'])
 	else:
-		forward(connection.cursor(), arguments['maillist'], mailbody.read())
+		forward(connection.cursor(),mta , arguments['maillist'], mailbody.read())
 
 	# Commit any pending operation in the database.
 	connection.commit()
@@ -126,7 +127,7 @@ def open_connection(database):
 		raise ValueError('Wrong RDMS engine selected', database['rdms'])
 	return connection
 
-def unsubscribe(cursor, maillist, address):
+def unsubscribe(cursor, mta, maillist, address):
 	""" Remove the requester from the maillist """
 	sql = f"DELETE FROM subscriptions WHERE maillist='{maillist}' AND subscriptor='{address}';"
 	dprint(6, f'Executing SQL: {sql}')
@@ -134,7 +135,7 @@ def unsubscribe(cursor, maillist, address):
 ####### notifica al remitent la baixa.
 	return
 
-def subscribe(cursor, maillist, address):
+def subscribe(cursor, mta, maillist, address):
 	""" Add the requester to the maillist """
 	sql = f"INSERT INTO subscriptions VALUES ('{maillist}','{address}')"
 	dprint(6, f'Executing SQL: {sql}')
@@ -142,7 +143,7 @@ def subscribe(cursor, maillist, address):
 ####### notifica al remitent l'alta.
 	return
 
-def forward(cursor, maillist, body):
+def forward(cursor, mta, maillist, body):
 	""" Send reciveid mail to all users in the maillist """
 ####### busca tots els remitent a la base de dades.
 ####### Reenvia el correu a tots els destinataris.
