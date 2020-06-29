@@ -20,25 +20,31 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 """ Class to handle and print debug messages """
+from datetime import datetime
 
-class bcolors:
-	""" Colours for printing debug messages using ANSI escapes """
-	HEADER = '\033[95m'
-	OKPURPLE = '\033[35m'
-	OKBLUE = '\033[94m'
-	OKGREEN = '\033[92m'
-	WARNING = '\033[93m'
-	FAIL = '\033[91m'
-	ENDC = '\033[0m'
-	BOLD = '\033[1m'
-	UNDERLINE = '\033[4m'
+# Colours and tags for printing debug messages using ANSI escapes """
+debug_levels = [["EMERG", "\033[4m\033[1m\033[91m"], \
+				["ALERT", "\033[1m\033[91m"], \
+				["CRITC", "\033[91m"], \
+				["ERROR", "\033[31m"], \
+				["WARNG", "\033[33m"], \
+				["NOTIC", "\033[32m"], \
+				[" INFO", "\033[97m"], \
+				["DEBUG", "\033[37m"]]
 
 def dprint(debug_level, level, debug_message):
 	""" Print debug informaiton in different debug levels """
-	colour = bcolors.FAIL
-	if level == 7:
-		colour = bcolors.OKGREEN
-	elif level == 6:
-		colour = bcolors.WARNING
+	tag, colour = debug_levels[level]
+	dateTimeObj = datetime.now()
+	timestampStr = dateTimeObj.strftime("[%Y-%m-%d %H:%M:%S]")
 	if level <= debug_level:
-		print(f"{colour}[INFO]:{debug_message}{bcolors.ENDC}")
+		print(f"{timestampStr} {colour}[{tag}]: {debug_message}\033[0m")
+
+def demo_mode():
+	""" Show a sample of each type of debug message """
+	for level in range(0, 8):
+		dprint(8, level, f"demo mode - this is level: {level}")
+
+if __name__ == '__main__':
+	# Call demo mode if script is called stand-alone
+	demo_mode()
