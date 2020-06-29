@@ -139,7 +139,7 @@ def unsubscribe(cursor, mta, maillist, address):
 
 def subscribe(cursor, mta, maillist, address):
 	""" Add the requester to the maillist """
-	sql = f"INSERT INTO subscriptions VALUES ('{maillist}','{address}')"
+	sql = f"INSERT OR IGNORE INTO subscriptions VALUES ('{maillist}','{address}')"
 	dprint(6, f'Executing SQL: {sql}')
 	cursor.execute(sql)
 	send_template(mta, maillist, address, "subscribe")
