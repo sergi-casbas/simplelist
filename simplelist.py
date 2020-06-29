@@ -148,8 +148,18 @@ def subscribe(cursor, mta, maillist, address):
 
 def forward(cursor, mta, maillist, body):
 	""" Send reciveid mail to all users in the maillist """
-####### busca tots els remitent a la base de dades.
-####### Reenvia el correu a tots els destinataris.
+	sql = f"SELECT subscriptor FROM subscriptions WHERE maillist = '{maillist}';"
+	dprint(6, f'Executing SQL: {sql}')
+	cursor.execute(sql)
+	EOC = False
+	while not EOC:
+		address = cursor.fetchone()
+		if (address == None):
+			EOC =  True
+		else:
+			send_mail(mta, maillist, address[0], body)
+	return
+
 def send_mail(mta, sender, address, body):
 	""" Sends and email through the MTA """
 	dprint(5, f"Sending email from:{sender} to:{address}")
