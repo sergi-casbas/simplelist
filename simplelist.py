@@ -49,7 +49,6 @@ def main(sys_arguments, mailbody):
 
 	# Extract if exist the command from the local argument.
 	arguments['command'] = arguments['local'].split("-", 1)[0]
-
 	if arguments['command'] in 'unsubscribe, subscribe':
 		arguments['maillist'] = arguments['local'].split("-", 1)[1]+'@'+arguments['domain']
 	else:
@@ -72,15 +71,15 @@ def main(sys_arguments, mailbody):
 	# Execute required operation.
 	dprint(5, f"Executing {arguments['command']} command")
 	if arguments['command'] == 'unsubscribe':
-		unsubscribe(connection.cursor(),mta , arguments['maillist'], arguments['sender'])
-	elif arguments['command'] == 'subscribe': 
-		subscribe(connection.cursor(),mta , arguments['maillist'], arguments['sender'])
+		unsubscribe(connection.cursor(), mta, arguments['maillist'], arguments['sender'])
+	elif arguments['command'] == 'subscribe':
+		subscribe(connection.cursor(), mta, arguments['maillist'], arguments['sender'])
 	else:
-		forward(connection.cursor(),mta , arguments['maillist'], mailbody.read())
+		forward(connection.cursor(), mta, arguments['maillist'], mailbody.read())
 
 	# Commit any pending operation in the database.
 	connection.commit()
-	
+
 	# If everything is OK, return 0
 	return 0
 
@@ -135,7 +134,6 @@ def unsubscribe(cursor, mta, maillist, address):
 	cursor.execute(sql)
 	send_template(mta, maillist, address, "unsubscribe")
 ####### notifica al remitent la baixa.
-	return
 
 def subscribe(cursor, mta, maillist, address):
 	""" Add the requester to the maillist """
@@ -144,7 +142,6 @@ def subscribe(cursor, mta, maillist, address):
 	cursor.execute(sql)
 	send_template(mta, maillist, address, "subscribe")
 ####### notifica al remitent l'alta.
-	return
 
 def forward(cursor, mta, maillist, body):
 	""" Send reciveid mail to all users in the maillist """
@@ -154,32 +151,28 @@ def forward(cursor, mta, maillist, body):
 	EOC = False
 	while not EOC:
 		address = cursor.fetchone()
-		if (address == None):
-			EOC =  True
+		if address is None:
+			EOC = True
 		else:
 			send_mail(mta, maillist, address[0], body)
-	return
 
 def send_mail(mta, sender, address, body):
 	""" Sends and email through the MTA """
 	dprint(5, f"Sending email from:{sender} to:{address}")
 	dprint(6, f"MTA connection: {mta}")
 	server = smtplib.SMTP(mta['host'], mta['port'])
-	server.set_debuglevel(debug_level>=7)
+	server.set_debuglevel(debug_level >= 7)
 	server.sendmail(sender, address, body)
 	server.quit()
-	return
 
 def send_template(mta, sender, address, template):
-	from string import Template
-	""" Sends a template based email """
+	""" Sends a template email to comunicate commands information """
 	template_file = f"./templates/{template}.eml"
 	dprint(6, f"Opening template {template_file}")
 	with open(template_file, "r") as file_object:
 		template = file_object.read()
-		template = template.replace("{maillist}",sender)
+		template = template.replace("{maillist}", sender)
 		send_mail(mta, sender, address, template)
-	return
 
 if __name__ == '__main__':
 	import sys
