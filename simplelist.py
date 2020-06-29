@@ -60,7 +60,7 @@ def main(sys_arguments, mailbody):
 
 	# Store messages to local maildir directory if not disabled.
 	if configs['storage']['disabled']:
-		dprint(7, "Messages storing is disabled")
+		dprint(6, "Messages storing is disabled")
 	else:
 		store_message(configs['storage'], arguments, sys_arguments, mailbody.read())
 
@@ -68,7 +68,7 @@ def main(sys_arguments, mailbody):
 	connection = open_connection(configs['database'])
 
 	# Execute required operation.
-	dprint(7, f"Executing {arguments['command']} command")
+	dprint(5, f"Executing {arguments['command']} command")
 	if arguments['command'] == 'unsubscribe':
 		unsubscribe(connection.cursor(), arguments['maillist'], arguments['sender'])
 	elif arguments['command'] == 'subscribe': 
@@ -85,7 +85,7 @@ def main(sys_arguments, mailbody):
 def read_configuration(config_file):
 	""" Read configuration JSON and returns as dictionary """
 	# read JSON
-	dprint(7, f"Reading configuration file from {config_file}")
+	dprint(5, f"Reading configuration file from {config_file}")
 	with open(config_file, 'r') as JSON_file:
 		configurations = json.loads(JSON_file.read())
 	return configurations
@@ -98,10 +98,10 @@ def store_message(storage, arguments, sys_arguments, body):
 	args_file = f"{dirlist}/args/{messageid}.simplelist"
 	body_file = f"{dirlist}/new/{messageid}.simplelist"
 
-	dprint(7, f"Storing arguments on {args_file}")
+	dprint(6, f"Storing arguments on {args_file}")
 	store_file_autocreate_parent(args_file, str(sys_arguments))
 
-	dprint(7, f"Storing email body on {body_file}")
+	dprint(6, f"Storing email body on {body_file}")
 	store_file_autocreate_parent(body_file, body)
 
 def store_file_autocreate_parent(filename, contents):
@@ -120,7 +120,7 @@ def open_connection(database):
 	connection = None
 	if database['rdms'] == "sqlite":
 		import sqlite3
-		dprint(7, "Connection to database sqlite://" + database['path'])
+		dprint(6, "Connection to database sqlite://" + database['path'])
 		connection = sqlite3.connect(database['path'])
 	else:
 		raise ValueError('Wrong RDMS engine selected', database['rdms'])
@@ -129,7 +129,7 @@ def open_connection(database):
 def unsubscribe(cursor, maillist, address):
 	""" Remove the requester from the maillist """
 	sql = f"DELETE FROM subscriptions WHERE maillist='{maillist}' AND subscriptor='{address}';"
-	dprint(7,f'Executing SQL: {sql}')
+	dprint(6, f'Executing SQL: {sql}')
 	cursor.execute(sql)
 ####### notifica al remitent la baixa.
 	return
@@ -137,7 +137,7 @@ def unsubscribe(cursor, maillist, address):
 def subscribe(cursor, maillist, address):
 	""" Add the requester to the maillist """
 	sql = f"INSERT INTO subscriptions VALUES ('{maillist}','{address}')"
-	dprint(7,f'Executing SQL: {sql}')
+	dprint(6, f'Executing SQL: {sql}')
 	cursor.execute(sql)
 ####### notifica al remitent l'alta.
 	return
@@ -150,5 +150,5 @@ def forward(cursor, maillist, body):
 
 if __name__ == '__main__':
 	import sys
-	debug_level = 7 #TO-DO read from sys.argv.
+	debug_level = 6 #TO-DO read from sys.argv.
 	sys.exit(main(sys.argv, sys.stdin))
