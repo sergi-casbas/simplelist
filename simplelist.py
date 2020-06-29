@@ -24,6 +24,7 @@ import os
 import json
 import time
 import random
+import smtplib
 
 time_milliseconds = lambda: int(round(time.time() * 1000))
 global debug_level
@@ -132,6 +133,7 @@ def unsubscribe(cursor, mta, maillist, address):
 	sql = f"DELETE FROM subscriptions WHERE maillist='{maillist}' AND subscriptor='{address}';"
 	dprint(6, f'Executing SQL: {sql}')
 	cursor.execute(sql)
+	send_template(mta, maillist, address, "unsubscribe")
 ####### notifica al remitent la baixa.
 	return
 
@@ -140,6 +142,7 @@ def subscribe(cursor, mta, maillist, address):
 	sql = f"INSERT INTO subscriptions VALUES ('{maillist}','{address}')"
 	dprint(6, f'Executing SQL: {sql}')
 	cursor.execute(sql)
+	send_template(mta, maillist, address, "subscribe")
 ####### notifica al remitent l'alta.
 	return
 
@@ -147,6 +150,25 @@ def forward(cursor, mta, maillist, body):
 	""" Send reciveid mail to all users in the maillist """
 ####### busca tots els remitent a la base de dades.
 ####### Reenvia el correu a tots els destinataris.
+def send_mail(mta, sender, address, body):
+	""" Sends and email through the MTA """
+	dprint(5, f"Sending email from:{sender} to:{address}")
+	dprint(6, f"MTA connection: {mta}")
+	server = smtplib.SMTP(mta['host'], mta['port'])
+	server.set_debuglevel(debug_level>=7)
+	server.sendmail(sender, address, body)
+	server.quit()
+	return
+
+def send_template(mta, sender, address, template):
+	from string import Template
+	""" Sends a template based email """
+	template_file = f"./templates/{template}.eml"
+	dprint(6, f"Opening template {template_file}")
+	with open(template_file, "r") as file_object:
+		template = file_object.read()
+		template = template.replace("{maillist}",sender)
+		send_mail(mta, sender, address, template)
 	return
 
 if __name__ == '__main__':
