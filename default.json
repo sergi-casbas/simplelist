@@ -1,14 +1,14 @@
 {
-	"storage":{
-		"disabled":"True",
-		"directory":"./test/maildir"
-	},
 	"mta":{
 		"host":"127.0.0.1",
 		"port":"25"
 	},
+	"storage":{
+		"disabled":"True",
+		"directory":"/var/simplelist/maildir"
+	},
 	"database":{
 		"rdms":"sqlite",
-		"path":"./test/database.sqlite3"
+		"path":"/var/simplelist/database.sqlite3"
 	}
 }
