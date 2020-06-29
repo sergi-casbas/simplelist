@@ -176,11 +176,14 @@ def send_template(mta, sender, address, template):
 
 if __name__ == '__main__':
 	import sys
+	import traceback
+	
 	debug_level = 6 #TO-DO read from sys.argv.
 	try:
 		sys.exit(main(sys.argv, sys.stdin))
 	except Exception as error:
-		exc_type, exc_obj, exc_tb = sys.exc_info()
-		fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-		dprint(0, f'Exception on {fname} [{exc_tb.tb_lineno}]: '+ ' : '.join(error.args))
+		exc_type, exc_value, exc_traceback = sys.exc_info()
+		trace = traceback.extract_tb(exc_traceback, limit=-1)
+		dprint(0, trace.format())
+		#dprint(0, f'Exception on {fname} [{exc_tb.tb_lineno}]: '+ ' : '.join(error.args))
 		sys.exit(1)
