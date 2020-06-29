@@ -4,4 +4,4 @@
 # subscripions table.
 CREATE TABLE `subscriptions` 
 ( `maillist` TEXT, `subscriptor` INTEGER, PRIMARY KEY(`maillist`,`subscriptor`) );
-CREATE UNIQUE INDEX `maillists` ON `subscriptions` ( `maillist` );
+CREATE INDEX `maillists` ON `subscriptions` ( `maillist` );
