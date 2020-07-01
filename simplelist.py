@@ -50,7 +50,7 @@ def main(sys_arguments, mailbody):
 	# Establish debug level by argument or by default.
 	if 'verbose' in arguments:
 		debug_level = arguments['verbose']
-	else 
+	else:
 		debug_level = 0
 
 	# Extract if exist the command from the local argument.
