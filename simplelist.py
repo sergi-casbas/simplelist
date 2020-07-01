@@ -37,7 +37,10 @@ def dprint(level, debug_message): # TO-DO Improve as class.
 
 def main(sys_arguments, mailbody):
 	""" Main proceure orchestrator """
-	# Local variables.
+	# Global variables
+    global debug_level
+    
+    # Local variables.
 	arguments = {}
 	configs = {}
 	connection = None
