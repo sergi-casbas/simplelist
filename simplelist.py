@@ -66,7 +66,7 @@ def main(sys_arguments, mailbody):
 		arguments['maillist'] = arguments['local']+'@'+arguments['domain']
 
 	# Read configuration file.
-	configs = read_configuration("./default.json")
+	configs = read_configuration(f"{arguments['config']}")
 
 	# Store messages to local maildir directory if not disabled.
 	if configs['storage']['disabled']:
@@ -177,7 +177,7 @@ def send_mail(mta, sender, address, body):
 
 def send_template(mta, sender, address, template):
 	""" Sends a template email to comunicate commands information """
-	template_file = f"./templates/{template}.eml"
+	template_file = mta['templates'] + f"/{template}.eml"
 	dprint(6, f"Opening template {template_file}")
 	with open(template_file, "r") as file_object:
 		template = file_object.read()
