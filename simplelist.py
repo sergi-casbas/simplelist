@@ -26,8 +26,9 @@ import time
 import random
 import smtplib
 
-time_milliseconds = lambda: int(round(time.time() * 1000))
 global debug_level
+debug_level = 0
+time_milliseconds = lambda: int(round(time.time() * 1000))
 
 def dprint(level, debug_message): # TO-DO Improve as class.
 	"""" Call external class dprint function """
