@@ -53,7 +53,7 @@ def main(sys_arguments, mailbody):
 
 	# Establish debug level by argument or by default.
 	if 'verbose' in arguments:
-		debug_level = arguments['verbose']
+		debug_level = int(arguments['verbose'])
 	else:
 		debug_level = 0
 
