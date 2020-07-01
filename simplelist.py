@@ -47,6 +47,12 @@ def main(sys_arguments, mailbody):
 		if len(splited) == 2:
 			arguments[splited[0][2:]] = splited[1]
 
+	# Establish debug level by argument or by default.
+	if 'verbose' in arguments:
+		debug_level = arguments['verbose']
+	else 
+		debug_level = 0
+
 	# Extract if exist the command from the local argument.
 	arguments['command'] = arguments['local'].split("-", 1)[0]
 	if arguments['command'] in 'unsubscribe, subscribe':
@@ -177,13 +183,11 @@ def send_template(mta, sender, address, template):
 if __name__ == '__main__':
 	import sys
 	import traceback
-	
-	debug_level = 6 #TO-DO read from sys.argv.
+
 	try:
 		sys.exit(main(sys.argv, sys.stdin))
 	except Exception as error:
 		exc_type, exc_value, exc_traceback = sys.exc_info()
 		trace = traceback.extract_tb(exc_traceback, limit=-1)
 		dprint(0, trace.format())
-		#dprint(0, f'Exception on {fname} [{exc_tb.tb_lineno}]: '+ ' : '.join(error.args))
 		sys.exit(1)
