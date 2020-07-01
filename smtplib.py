@@ -360,6 +360,7 @@ class SMTP:
 
     def putcmd(self, cmd, args=""):
         """Send a command to the server."""
+        cmd = cmd.upper()
         if args == "":
             str = '%s%s' % (cmd, CRLF)
         else:
