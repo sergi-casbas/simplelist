@@ -84,7 +84,13 @@ def main(sys_arguments, mailbody):
 
 	# TO-DO white and blacklists. #2 i #3
 
-	# TO-DO bouncing protection with auto-reply #1
+	# Bouncing protection with auto-reply #1
+	if "Auto-Submitted:" in arguments['body'] and  "Auto-Submitted: no" not in arguments['body']:
+		dprint(4, "Auto-Submitted message, ignore it")
+		return 0 # If is a auto-submited ignoring it.
+	if "Auto-Generated:" in arguments['body'] and "Auto-Generated: no" not in arguments['body']:
+		dprint(4, "Auto-Generated message, ignore it")
+		return 0 # If is a auto-submited ignoring it.
 
 	# Store messages to local maildir directory if not disabled.
 	if configs['storage']['disabled']:

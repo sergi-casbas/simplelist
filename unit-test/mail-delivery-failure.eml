@@ -1,0 +1,90 @@
+Return-Path: <>
+Received: from mout-bounce.kundenserver.de ([212.227.15.57]) by
+ mx.kundenserver.de (mxeue109 [217.72.192.67]) with ESMTPS (Nemesis) id
+ 1N5nSf-1iksey2wsF-017IAG for <no-reply@lists.rstic.es>; Thu, 02 Jul 2020
+ 13:42:07 +0200
+Received: from localhost by mout-bounce.kundenserver.de id 0MH1aU-1jeMhB2RBi-00Drpa
+    Thu, 02 Jul 2020 13:42:07 +0200
+Date: Thu, 02 Jul 2020 13:42:07 +0200
+From: "Mail Delivery System" <mailer-daemon@kundenserver.de>
+To: no-reply@lists.rstic.es
+Subject: Mail delivery failed: returning message to sender
+Auto-Submitted: auto-replied
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+X-UI-Out-Filterresults: unknown:0;V03:K0:bESm6wq3A5g=:FFwG9j3w9cr59DtVOMt6Zw
+ ==
+Envelope-To: <no-reply@lists.rstic.es>
+X-Spam-Flag: NO
+X-UI-Filterresults: notjunk:1;V03:K0:W0uKPdC4sL0=:JyE0prFgHtBGmOoluFqXDw00Ae
+ wdhWGSE8LHtKdXR6amGVfPfbT1uYOtX7x2GV4gHAzOTC6KtrOiYeRafJlnPIzxiDQJ3aHnZ4K
+ oQwHiA7iD2dnZgaT04mMdUN6mdWUC2ISDNO+45wLY6+NxbHPz4UJLW8OJCcsaBrj+M1mjsjbr
+ dPCpDYdTkfVVkPeN3Soo+YwoySv2WN4QYTLBqsEH61tOlnf46vinNi3dlTx6QVB2NxXaPmkyw
+ OnS8cyr+cyZqIBsvnKlyH1H6l5w41jxqvvgSnZGaEJEq1L9F6HApd2pjO7S36t3C/HxiLRdiH
+ ZVGj08d8G6KkD/PsKKluvqypbtudKWwCpoiVueNYEN44FlYHu9yFOFABVIuzoKa+2/YajnrDk
+ FT5nb7ftupgqqDegKLbJlu/5txYWKYjLnaxxpJXYzPJ9aKd+bQyEQPm2xXEcsNOlScN2fCFBG
+ 0D4lZEeXewcdvZiKp3ZAoFRhve1gvitWCC8f6lUc20Nh4sF9EY0hQ3r519JOkhG4eZg9u7Kvf
+ /azgDIxNHCWh4nc2tfZQ8jKBJgFvapl9EhbCyYyaRO5CrQsAhBKIRVmeHB+nnHaHyKxbiYYkK
+ a5VM5w8w+HGBuw/YTGa913Vv+e+qFF4HLY4909Rr/9LxOioYUaVM1POweoelucEiuPxV8XrX2
+ zfJbP1/UZZY0Tz27CfePBAU1eOqNOa9TGIrkOqqANRKm+l0en8/L+Zfu7/Z5AAhHdXKEVDjw9
+ 3GHj93AjLn1kJC7OzISsLTlb4akboScUZTBKoZehHZD/Q7ItdqEtbkd9m8mLYBwL8wK0z4ZEu
+ eIY55N5TvQ6hFvBkLIC5BjNu8MbbTWaNpK/TiNryZHv3c6v0p8jdw62HdNivv+bdqJrmrru0f
+ Y3dsplBkBeGfAB2hkemG1abGeQcwViDm7Q/Dzvkdy0xNMC6JGs9E0SQz+eus/V/AxXmj8pvvA
+ NfBLnbbhwecoT6VHM7obuNTYldCx3UvXSFNGXbtXyeGUn0JBqCEjrcoIntjyZs35HvF75wKCf
+ e85H87fFM/D0aBtz5baWcZUc4L/uBa7w18OQdOwdU5BseSbbYiexJClXdQGmtFyP46GFpYJNb
+ QI9I63HRn7ec2O0UjyLXbokle26DBW+J2M39oiJ+Zy2uLvVeqaDC6f4QrUQc1/lI5ikgTtKC3
+ 0N2rHZbCsMPRGJhFAH3JTc9Ynsh5ysBQq3gcDs+glRi/QFJMwP3UDbnm9bych9w8OvI0HEkz/
+ KJIbgBzddDBg/2orJfWa8pYNWpFzeLuTjNnZRI8z8Zjj3gPNzo2voEfXFxRej3ONJHyGxT7Ya
+ 3Rk3XFAVcf0MEtIaVOKfVqTq8grOUQDz5wHIMn8nIMLTE8JFP4g4z071D1hhgT49czvwE34Py
+ 56lX0wBo4y1rytlIcbj4mfhRJdC/ecsxacKXrum48Mws2i8tb9frjtuSMK3n/t00NrMW+pfQ3
+ wIhX7k1yyfwxRwKDDvIUGWn4+6Ii0gqU/CP3Yq2G4MWLWBjZsBJ9ifAVRuksZ7dWxy0svsNCp
+ zmLVXSqDUCNsyyBb6OMDFwuEIafSTTymuEnb3wyPFGYgnEo4g3imD1cbLwDBcJFp4hliqBgwv
+ F+bU9HIEAb1I2jJkDJ2nZWBzW3dKMSONtjp01DWYYlkwDh6yBEuDVMonydXP8j/O/Fd+P2MpQ
+ vBezjidRHP02jTp6m8zzoKC5urjne7CjZQmqSpXHhBEPUS7m7QtiYTM7kjj5roWv1TTOTStHF
+ 1AyDJRly+Q763Nj/WKGPgAkuZX61yZtxCaP+c3WmHIE2q4TXW9qXYn/G45gimnQtup6QgQrat
+ 2xMrd6zetY7BEwEE9WDvAyKoRgg==
+
+This message was created automatically by mail delivery software.
+
+A message that you sent could not be delivered to one or more of
+its recipients. This is a permanent error. The following address(es)
+failed:
+
+no-reply@rstic.es:
+SMTP error from remote server for RCPT TO command, host: mx01.1and1.es (217.72.192.67) reason: 550 Requested action not taken: mailbox unavailable
+
+
+
+--- The header of the original message is following. ---
+
+Received: from localhost ([82.223.10.162]) by mrelayeu.kundenserver.de
+ (mreue009 [213.165.67.102]) with ESMTPSA (Nemesis) id
+ 1N4z2a-1iq67X17Fk-010tfE for <no-reply@rstic.es>; Thu, 02 Jul 2020 13:42:07
+ +0200
+From: no-reply@lists.rstic.es
+Date: Thu, 02 Jul 2020 11:42:06 +0000
+Subject: Mail list help
+Message-ID: <1MOiLv-1jRsuG1U7z-00Q7fP@mrelayeu.kundenserver.de>
+X-Provags-ID: V03:K1:v3YTLClmZLH5h2T/otFXRtatitCclnfwoqdEytRlKgSQjpky4lt
+ B8ddki/gsCtnKfpfWtNJQXVW2Sn55CF81n/3XjY9a8cBjwVvbFQALrj3GpF1OoNNmicrCQU
+ x3MQW6eftVdeYWRAPjJIaK5Sxbovg5uKeqR4mZOnKcwy4wEgYhkB47egtLd8tK9/rHrUjqq
+ qonzKusxWjd2ZUeuPs4bg==
+X-Spam-Flag: NO
+X-UI-Out-Filterresults: notjunk:1;V03:K0:d/b6zqVvKfI=:G9L6VQ5ol6YBy2m50qDFAH
+ yhizmhaxqr++WyvySjKf8Nzs0YRfPUrWX6hCNZyM0x10HC22Zq/qBEBYokrghWn/A2ptfzKha
+ LrNBT6EuHAyCWojq2wM7igW8G4vP4QTHFmi/NN/wCDuiIrjSLdTjNDYXsI0WcYFIZ/ADV+aji
+ rB+q0vJ9kUxMLAmWsXD2TvkrU/KJ0wo00HBrE9VJ1luru8k3Ay3oywpJiJtvDn1KtMqa70I7P
+ AU6aqvX1Nhw1XR5B7uKrTvgFayYqBermnTqp1RWlTXPz+2rry3HARdTVPnyul94G7vuJpY2l8
+ 6GdQFFKWfVaIydEKuj42l/arJFM5czx1cKXpnC3CkYqwhCqHbfmf7wgHJcwvwe14EURshs3vH
+ TEA2dTCqH45707MFs4gIzRjIsUQPMHbCYr4hLIKRX5nSfw4MBpEpTZ1UUVf17Q2ywTRfxuakB
+ uMUcKebhDEMCI21fJWtjv05PFRHCHl93o9k5Yvt7/MHj31XJZY3V4MGTyyq8w6uhI4hOrnDdA
+ VoN/1GWHoLxB8+CzpyOIldFqh12+46LEGhjl/7S0LjHavh+8VuG56F09ZP1nRd18ZUqaTIIZt
+ 3gnXsxZInlNxEVLuL1wSlrzZjU3EbChehKmpZhBCTO3SQH5fEXAydDLI9pvhaF9+pyrvhRqg8
+ 0qN18e+6fB5rHADcpyjVAJziiBozCD7/jBD5wewM7/vaAkKU46mUcTYRfttMhvzXutF3OSeQi
+ hOYST2E58AK4g9hiAOLg+brSLhTsBLsEzOqEzaA9aYLFLDsBffQzl2gKBJz7UQkO7RYDqMLI7
+ bZpC29GLzF+J0SIz64WyV0UdVYLfAV/2V1zkyha3sbTgsiwobGdoCI/BsXy6KpTXZpjqzKi/9
+ c1stjlRIh1gGi/cZhL5zP0Jk07Dsk8sJCtcz2hR5k=
+
+
+
