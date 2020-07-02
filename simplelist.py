@@ -66,7 +66,10 @@ def main(sys_arguments, mailbody):
 		arguments['maillist'] = arguments['local']+'@'+arguments['domain']
 
 	# Read configuration file.
-	configs = read_configuration(f"{arguments['config']}")
+	if 'config' in arguments:
+		configs = read_configuration(arguments['config'])
+	else:
+		configs = read_configuration("./default.json")
 
 	# Store messages to local maildir directory if not disabled.
 	if configs['storage']['disabled']:
