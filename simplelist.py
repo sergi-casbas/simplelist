@@ -59,7 +59,7 @@ def main(sys_arguments, mailbody):
 
 	# Extract if exist the command from the local argument.
 	arguments['command'] = arguments['local'].split("-", 1)[0]
-	if arguments['command'] in 'unsubscribe, subscribe':
+	if arguments['command'] in 'help, unsubscribe, subscribe':
 		arguments['maillist'] = arguments['local'].split("-", 1)[1]+'@'+arguments['domain']
 	else:
 		arguments['command'] = 'forward'
@@ -80,7 +80,9 @@ def main(sys_arguments, mailbody):
 
 	# Execute required operation.
 	dprint(5, f"Executing {arguments['command']} command")
-	if arguments['command'] == 'unsubscribe':
+	if arguments['command'] == 'help':
+		send_help(mta, arguments['maillist'], arguments['sender'])
+	elif arguments['command'] == 'unsubscribe':
 		unsubscribe(connection.cursor(), mta, arguments['maillist'], arguments['sender'])
 	elif arguments['command'] == 'subscribe':
 		subscribe(connection.cursor(), mta, arguments['maillist'], arguments['sender'])
@@ -136,6 +138,10 @@ def open_connection(database):
 	else:
 		raise ValueError('Wrong RDMS engine selected', database['rdms'])
 	return connection
+
+def send_help(mta, maillist, address): #7
+	""" Send help template information to the requester """
+	send_template(mta, maillist, address, "help")
 
 def unsubscribe(cursor, mta, maillist, address):
 	""" Remove the requester from the maillist """
