@@ -211,5 +211,5 @@ if __name__ == '__main__':
 	except Exception as error:
 		exc_type, exc_value, exc_traceback = sys.exc_info()
 		trace = traceback.extract_tb(exc_traceback, limit=-1)
-		dprint(0, trace.format())
+		dprint(0, f'{type(exc_value)} {trace.format()[0]}' )
 		sys.exit(1)
