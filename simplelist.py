@@ -71,6 +71,10 @@ def main(sys_arguments, mailbody):
 	else:
 		configs = read_configuration("./default.json")
 
+	# Set verbosity if no argument is set and exists in config file.
+	if not 'verbose' in arguments and 'verbose' in configs:
+		debug_level = int(configs['verbose'])
+
 	# Store messages to local maildir directory if not disabled.
 	if configs['storage']['disabled']:
 		dprint(6, "Messages storing is disabled")
