@@ -1,7 +1,9 @@
 {
+	"verbose" : 6,
 	"mta":{
 		"host":"127.0.0.1",
-		"port":"25"
+		"port":"25",
+		"templates":"./templates/"
 	},
 	"storage":{
 		"disabled":"True",
