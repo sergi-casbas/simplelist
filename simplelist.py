@@ -75,6 +75,10 @@ def main(sys_arguments, mailbody):
 	if not 'verbose' in arguments and 'verbose' in configs:
 		debug_level = int(configs['verbose'])
 
+	# TO-DO white and blacklists. #2 i #3
+
+	# TO-DO bouncing protection with auto-reply #1
+
 	# Store messages to local maildir directory if not disabled.
 	if configs['storage']['disabled']:
 		dprint(6, "Messages storing is disabled")
@@ -92,8 +96,10 @@ def main(sys_arguments, mailbody):
 	elif arguments['command'] == 'unsubscribe':
 		unsubscribe(connection.cursor(), mta, arguments['maillist'], arguments['sender'])
 	elif arguments['command'] == 'subscribe':
+		# Limit to existing lists #6
 		subscribe(connection.cursor(), mta, arguments['maillist'], arguments['sender'])
 	else:
+		# Require user subscription to forward #4
 		forward(connection.cursor(), mta, arguments['maillist'], mailbody.read())
 
 	# Commit any pending operation in the database.
