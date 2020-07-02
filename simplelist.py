@@ -64,7 +64,7 @@ def main(sys_arguments, mailbody):
 	elif arguments['command'] in 'unsubscribe, subscribe':
 		try:
 			arguments['maillist'] = arguments['local'].split("-", 1)[1]+'@'+arguments['domain']
-		except IndexError as error:
+		except IndexError:
 			arguments['command'] = 'error'
 			arguments['maillist'] = arguments['local']+'@'+arguments['domain']
 	else:
