@@ -39,8 +39,8 @@ def main(sys_arguments, mailbody):
 	""" Main proceure orchestrator """
 	# Global variables
 	global debug_level
-    
-    # Local variables.
+
+	# Local variables.
 	arguments = {}
 	configs = {}
 	connection = None
@@ -118,7 +118,7 @@ def store_message(storage, arguments, sys_arguments, body):
 	store_file_autocreate_parent(body_file, body)
 
 def store_file_autocreate_parent(filename, contents):
-	""" Stores the contents into filename, autocreate parent if required s"""
+	""" Stores the contents into filename, autocreate parent if required """
 	try:
 		with open(filename, "w") as file_object:
 			file_object.write(contents)
@@ -149,7 +149,6 @@ def unsubscribe(cursor, mta, maillist, address):
 	dprint(6, f'Executing SQL: {sql}')
 	cursor.execute(sql)
 	send_template(mta, maillist, address, "unsubscribe")
-####### notifica al remitent la baixa.
 
 def subscribe(cursor, mta, maillist, address):
 	""" Add the requester to the maillist """
@@ -157,7 +156,6 @@ def subscribe(cursor, mta, maillist, address):
 	dprint(6, f'Executing SQL: {sql}')
 	cursor.execute(sql)
 	send_template(mta, maillist, address, "subscribe")
-####### notifica al remitent l'alta.
 
 def forward(cursor, mta, maillist, body):
 	""" Send reciveid mail to all users in the maillist """
