@@ -70,6 +70,7 @@ def main(sys_arguments, mailbody):
 	else:
 		arguments['command'] = 'forward'
 		arguments['maillist'] = arguments['local']+'@'+arguments['domain']
+	arguments['body'] = mailbody.read()
 
 	# Read configuration file.
 	if 'config' in arguments:
@@ -89,7 +90,7 @@ def main(sys_arguments, mailbody):
 	if configs['storage']['disabled']:
 		dprint(6, "Messages storing is disabled")
 	else:
-		store_message(configs['storage'], arguments, sys_arguments, mailbody.read())
+		store_message(configs['storage'], arguments, sys_arguments, arguments['body'])
 
 	# Open database connection.
 	connection = open_connection(configs['database'])
@@ -106,7 +107,7 @@ def main(sys_arguments, mailbody):
 		subscribe(connection.cursor(), mta, arguments['maillist'], arguments['sender'])
 	else:
 		# Require user subscription to forward #4
-		forward(connection.cursor(), mta, arguments['maillist'], mailbody.read())
+		forward(connection.cursor(), mta, arguments['maillist'], arguments['body'])
 
 	# Commit any pending operation in the database.
 	connection.commit()
