@@ -79,7 +79,7 @@ def main(sys_arguments, mailbody):
 		configs = read_configuration("./default.json")
 
 	# Set verbosity if no argument is set and exists in config file.
-	if not 'verbose' in arguments and 'verbose' in configs:
+	if 'verbose' not in arguments and 'verbose' in configs:
 		debug_level = int(configs['verbose'])
 
 	# TO-DO white and blacklists. #2 i #3
@@ -222,5 +222,5 @@ if __name__ == '__main__':
 	except Exception as error:
 		exc_type, exc_value, exc_traceback = sys.exc_info()
 		trace = traceback.extract_tb(exc_traceback, limit=-1)
-		dprint(0, f'{type(exc_value)} {trace.format()[0]}' )
+		dprint(0, f'{type(exc_value)} {trace.format()[0]}')
 		sys.exit(1)
