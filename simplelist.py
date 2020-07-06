@@ -93,10 +93,11 @@ def main(sys_arguments, mailbody):
 		return 0 # If is a auto-submited ignoring it.
 
 	# Store messages to local maildir directory if not disabled.
-	if configs['storage']['disabled']:
-		dprint(6, "Messages storing is disabled")
-	else:
+	dprint(7,f"Messages storing is {configs['storage']['enabled']}")
+	if configs['storage']['enabled'] == "True":
 		store_message(configs['storage'], arguments, sys_arguments, arguments['body'])
+	else:
+		dprint(6, "Messages storing is disabled")
 
 	# Open database connection.
 	connection = open_connection(configs['database'])
@@ -193,6 +194,7 @@ def forward(cursor, mta, maillist, body):
 	dprint(6, f'Executing SQL: {sql}')
 	cursor.execute(sql)
 	EOC = False
+	body = f"Reply-To: {maillist}\n" + body
 	while not EOC:
 		address = cursor.fetchone()
 		if address is None:
