@@ -93,7 +93,7 @@ def main(sys_arguments, mailbody):
 		return 0 # If is a auto-submited ignoring it.
 
 	# Store messages to local maildir directory if not disabled.
-	dprint(7,f"Messages storing is {configs['storage']['enabled']}")
+	dprint(7, f"Messages storing is {configs['storage']['enabled']}")
 	if configs['storage']['enabled'] == "True":
 		store_message(configs['storage'], arguments, sys_arguments, arguments['body'])
 	else:
@@ -220,7 +220,8 @@ def send_template(mta, sender, address, template):
 		template = file_object.read()
 		template = template.replace("{maillist}", sender)
 		template = template.replace("{domain}", mta['domain'])
-		template = template + "\n\n------------------------------------------------------------------------\nMake your mail lists simply with Simplelist\n"
+		template = template + "\n\n" + ('-'*80)
+		template = template + "\nMake your mail lists simply with Simplelist\n"
 		send_mail(mta, sender, address, template)
 
 if __name__ == '__main__':
