@@ -5,10 +5,6 @@
 		"port":"25",
 		"templates":"./templates/"
 	},
-	"storage":{
-		"enabled":"False",
-		"directory":"/var/simplelist/maildir"
-	},
 	"database":{
 		"rdms":"sqlite",
 		"path":"/var/simplelist/database.sqlite3"

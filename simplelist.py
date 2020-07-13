@@ -20,10 +20,8 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 """ Simple implementation mail lists with getmail and SMTP """
-import os
 import json
 import time
-import random
 import smtplib
 
 global debug_level
@@ -92,13 +90,6 @@ def main(sys_arguments, mailbody):
 		dprint(4, "Auto-Generated message, ignore it")
 		return 0 # If is a auto-submited ignoring it.
 
-	# Store messages to local maildir directory if not disabled.
-	dprint(7, f"Messages storing is {configs['storage']['enabled']}")
-	if configs['storage']['enabled'] == "True":
-		store_message(configs['storage'], arguments, sys_arguments, arguments['body'])
-	else:
-		dprint(6, "Messages storing is disabled")
-
 	# Open database connection.
 	connection = open_connection(configs['database'])
 	mta = configs['mta']
@@ -130,31 +121,6 @@ def read_configuration(config_file):
 	with open(config_file, 'r') as JSON_file:
 		configurations = json.loads(JSON_file.read())
 	return configurations
-
-def store_message(storage, arguments, sys_arguments, body):
-	""" Store the message and arguments into the mailist directory using maildir """
-	dirlist = f"{storage['directory']}/{arguments['maillist']}"
-	messageid = time_milliseconds()+(random.random())
-
-	args_file = f"{dirlist}/args/{messageid}.simplelist"
-	body_file = f"{dirlist}/new/{messageid}.simplelist"
-
-	dprint(6, f"Storing arguments on {args_file}")
-	store_file_autocreate_parent(args_file, str(sys_arguments))
-
-	dprint(6, f"Storing email body on {body_file}")
-	store_file_autocreate_parent(body_file, body)
-
-def store_file_autocreate_parent(filename, contents):
-	""" Stores the contents into filename, autocreate parent if required """
-	try:
-		with open(filename, "w") as file_object:
-			file_object.write(contents)
-	except FileNotFoundError:
-		folder_path = os.path.dirname(os.path.abspath(filename))
-		dprint(6, f"Folder {folder_path} not found, creating it.")
-		os.makedirs(folder_path)
-		store_file_autocreate_parent(filename, contents)
 
 def open_connection(database):
 	""" Open database based on config and return an open cursor to it """
