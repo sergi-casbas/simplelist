@@ -102,6 +102,7 @@ def main(sys_arguments, mailbody):
 	# Open database connection.
 	connection = open_connection(configs['database'])
 	mta = configs['mta']
+	mta['domain'] = arguments['domain']
 
 	# Execute required operation.
 	dprint(5, f"Executing {arguments['command']} command")
@@ -218,7 +219,8 @@ def send_template(mta, sender, address, template):
 	with open(template_file, "r") as file_object:
 		template = file_object.read()
 		template = template.replace("{maillist}", sender)
-		template = template + "\n\n------------------------------------------------------------------------\nMake your mail lists easier with Simplelist\n"
+		template = template.replace("{domain}", mta['domain'])
+		template = template + "\n\n------------------------------------------------------------------------\nMake your mail lists simply with Simplelist\n"
 		send_mail(mta, sender, address, template)
 
 if __name__ == '__main__':
