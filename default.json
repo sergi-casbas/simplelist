@@ -6,7 +6,7 @@
 		"templates":"./templates/"
 	},
 	"storage":{
-		"disabled":"True",
+		"enabled":"False",
 		"directory":"/var/simplelist/maildir"
 	},
 	"database":{
