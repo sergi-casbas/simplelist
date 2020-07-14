@@ -21,10 +21,7 @@
 #  MA 02110-1301, USA.
 """ Simple implementation mail lists with getmail and SMTP """
 import json
-import time
 import smtplib
-
-time_milliseconds = lambda: int(round(time.time() * 1000))
 
 class simplelist:
 	""" Main class """
