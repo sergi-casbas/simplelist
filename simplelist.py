@@ -106,7 +106,7 @@ class simplelist:
 			self.subscribe(connection.cursor(), mta, arguments['maillist'], arguments['sender'])
 		else:
 			# Require user subscription to forward #4
-			self.forward(connection.cursor(), mta, arguments['maillist'], arguments['body'])
+			self.forward(connection.cursor(), mta, arguments['maillist'], arguments['sender'], arguments['body'])
 
 		# Commit any pending operation in the database.
 		connection.commit()
@@ -155,9 +155,9 @@ class simplelist:
 		cursor.execute(sql)
 		self.send_template(mta, maillist, address, "subscribe")
 
-	def forward(self, cursor, mta, maillist, body):
+	def forward(self, cursor, mta, maillist, address, body):
 		""" Send reciveid mail to all users in the maillist """
-		sql = f"SELECT subscriptor FROM subscriptions WHERE maillist = '{maillist}';"
+		sql = f"SELECT subscriptor FROM subscriptions WHERE maillist = '{maillist}' AND subscriptor <> '{address}';"
 		self.dprint(6, f'Executing SQL: {sql}')
 		cursor.execute(sql)
 		EOC = False
