@@ -101,13 +101,12 @@ class simplelist:
 		if arguments['command'] in 'help, error':
 			self.send_template('no-reply@'+arguments['domain'], arguments['sender'], arguments['command'])
 		elif arguments['command'] == 'unsubscribe':
-			self.unsubscribe(self.connection.cursor(), arguments['maillist'], arguments['sender'])
+			self.unsubscribe(arguments['maillist'], arguments['sender'])
 		elif arguments['command'] == 'subscribe':
-			# Limit to existing lists #6
-			self.subscribe(self.connection.cursor(), arguments['maillist'], arguments['sender'])
+			self.subscribe_request_authorization(arguments['maillist'], arguments['sender'])
 		else:
-			# Require user subscription to forward #4
-			self.forward(self.connection.cursor(), arguments['maillist'], arguments['sender'], arguments['body'])
+			# TODO Require user subscription to forward #4
+			self.forward(arguments['maillist'], arguments['sender'], arguments['body'])
 
 		# Commit any pending operation in the database.
 		self.connection.commit()
@@ -142,24 +141,30 @@ class simplelist:
 		""" Send a failure error to the sender """
 		self.send_template(maillist, address, "error")
 
-	def unsubscribe(self, cursor, maillist, address):
+	def unsubscribe(self, maillist, address):
 		""" Remove the requester from the maillist """
 		sql = f"DELETE FROM subscriptions WHERE maillist='{maillist}' AND subscriptor='{address}';"
 		self.dprint(6, f'Executing SQL: {sql}')
-		cursor.execute(sql)
+		self.connection.cursor().execute(sql)
 		self.send_template(maillist, address, "unsubscribe")
 
-	def subscribe(self, cursor, maillist, address):
+	def subscribe_request_authorization(self, maillist, address):
+		""" Request admin authorization to subscribe (if required) """
+		self.subscribe(maillist, address)
+		return 0
+
+	def subscribe(self, maillist, address):
 		""" Add the requester to the maillist """
 		sql = f"INSERT OR IGNORE INTO subscriptions VALUES ('{maillist}','{address}')"
 		self.dprint(6, f'Executing SQL: {sql}')
-		cursor.execute(sql)
+		self.connection.cursor().execute(sql)
 		self.send_template(maillist, address, "subscribe")
 
-	def forward(self, cursor, maillist, address, body):
+	def forward(self, maillist, address, body):
 		""" Send reciveid mail to all users in the maillist """
 		sql = f"SELECT subscriptor FROM subscriptions WHERE maillist = '{maillist}' AND subscriptor <> '{address}';"
 		self.dprint(6, f'Executing SQL: {sql}')
+		cursor = self.connection.cursor()
 		cursor.execute(sql)
 		EOC = False
 		body = f"Reply-To: {maillist}\n" + body
