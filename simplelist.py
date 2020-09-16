@@ -162,7 +162,8 @@ class simplelist:
 
 	def forward(self, maillist, address, body):
 		""" Send reciveid mail to all users in the maillist """
-		sql = f"SELECT subscriptor FROM subscriptions WHERE maillist = '{maillist}' AND subscriptor <> '{address}';"
+		sql = f"SELECT subscriptor FROM subscriptions \
+			WHERE maillist = '{maillist}' AND subscriptor <> '{address}';"
 		self.dprint(6, f'Executing SQL: {sql}')
 		cursor = self.connection.cursor()
 		cursor.execute(sql)
