@@ -181,7 +181,7 @@ class simplelist:
 		server.sendmail(sender, address, body)
 		server.quit()
 
-	def send_template(self, sender, address, template):
+	def send_template(self, sender, address, template, extra_replace=None):
 		""" Sends a template email to comunicate commands information """
 		template_file = self.mta['templates'] + f"/{template}.eml"
 		self.dprint(6, f"Opening template {template_file}")
@@ -189,6 +189,9 @@ class simplelist:
 			template = file_object.read()
 			template = template.replace("{maillist}", sender)
 			template = template.replace("{domain}", self.mta['domain'])
+			if extra_replace is not None:
+				for replace_pair in extra_replace:
+					template = template.replace("{"+replace_pair[0]+"}", replace_pair[1])
 			template = template + "\n\n" + ('-'*80)
 			template = template + "\nMake your mail lists simply with Simplelist\n"
 			self.send_mail(sender, address, template)
