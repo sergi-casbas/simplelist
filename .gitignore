@@ -61,3 +61,10 @@ target/
 
 # Geany editor
 *.geany
+
+# Visual studio related files
+.vscode/
+*.code-workspace
+
+# Personalized config file.
+config.json
