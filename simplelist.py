@@ -25,8 +25,40 @@ import smtplib
 
 class simplelist:
 	""" Main class """
-	def __init__(self):
-		self.debug_level = 0
+	def __init__(self, sys_arguments):
+		# class variables.
+		self.arguments = {}
+		self.configs = {}
+		self.connection = None
+
+		# Convert arguments into a indexed list.
+		for argument in sys_arguments:
+			splited = argument.split("=")
+			if len(splited) == 2:
+				self.arguments[splited[0][2:]] = splited[1]
+
+		# Establish debug level by argument or by default (need here to verbose config read)
+		if 'verbose' in self.arguments:
+			self.debug_level = int(self.arguments['verbose'])
+		else:
+			self.debug_level = 0
+
+		# Read configuration file.
+		if 'config' in self.arguments:
+			self.configs = self.read_configuration(self.arguments['config'])
+		else:
+			self.configs = self.read_configuration("./default.json")
+
+		# Set verbosity if no argument is set and exists in config file.
+		if 'verbose' not in self.arguments and 'verbose' in self.configs:
+			self.debug_level = int(self.configs['verbose'])
+
+		# Open database connection.
+		self.connection = self.open_connection(self.configs['database'])
+
+		# Configure mta parameters.
+		self.mta = self.configs['mta']
+		self.mta['domain'] = self.arguments['domain']
 
 	def dprint(self, level, debug_message): # TO-DO Improve as class.
 		"""" Call external class dprint function """
@@ -36,26 +68,10 @@ class simplelist:
 		from debug import dprint
 		dprint(self.debug_level, level, debug_message)
 
-	def main(self, sys_arguments, mailbody):
+	def main(self, mailbody):
 		""" Main proceure orchestrator """
-		# Local variables.
-		arguments = {}
-		configs = {}
-		connection = None
-
-		# Convert arguments into a indexed list.
-		for argument in sys_arguments:
-			splited = argument.split("=")
-			if len(splited) == 2:
-				arguments[splited[0][2:]] = splited[1]
-
-		# Establish debug level by argument or by default.
-		if 'verbose' in arguments:
-			self.debug_level = int(arguments['verbose'])
-		else:
-			self.debug_level = 0
-
 		# Extract if exist the command from the local argument.
+		arguments = self.arguments
 		arguments['command'] = arguments['local'].split("-", 1)[0]
 		if arguments['command'] in 'help':
 			arguments['maillist'] = arguments['local']+'@'+arguments['domain']
@@ -70,16 +86,6 @@ class simplelist:
 			arguments['maillist'] = arguments['local']+'@'+arguments['domain']
 		arguments['body'] = mailbody.read()
 
-		# Read configuration file.
-		if 'config' in arguments:
-			configs = self.read_configuration(arguments['config'])
-		else:
-			configs = self.read_configuration("./default.json")
-
-		# Set verbosity if no argument is set and exists in config file.
-		if 'verbose' not in arguments and 'verbose' in configs:
-			self.debug_level = int(configs['verbose'])
-
 		# TO-DO white and blacklists. #2 i #3
 
 		# Bouncing protection with auto-reply #1
@@ -90,26 +96,21 @@ class simplelist:
 			self.dprint(4, "Auto-Generated message, ignore it")
 			return 0 # If is a auto-submited ignoring it.
 
-		# Open database connection.
-		connection = self.open_connection(configs['database'])
-		mta = configs['mta']
-		mta['domain'] = arguments['domain']
-
 		# Execute required operation.
 		self.dprint(5, f"Executing {arguments['command']} command")
 		if arguments['command'] in 'help, error':
-			self.send_template(mta, 'no-reply@'+arguments['domain'], arguments['sender'], arguments['command'])
+			self.send_template('no-reply@'+arguments['domain'], arguments['sender'], arguments['command'])
 		elif arguments['command'] == 'unsubscribe':
-			self.unsubscribe(connection.cursor(), mta, arguments['maillist'], arguments['sender'])
+			self.unsubscribe(self.connection.cursor(), arguments['maillist'], arguments['sender'])
 		elif arguments['command'] == 'subscribe':
 			# Limit to existing lists #6
-			self.subscribe(connection.cursor(), mta, arguments['maillist'], arguments['sender'])
+			self.subscribe(self.connection.cursor(), arguments['maillist'], arguments['sender'])
 		else:
 			# Require user subscription to forward #4
-			self.forward(connection.cursor(), mta, arguments['maillist'], arguments['sender'], arguments['body'])
+			self.forward(self.connection.cursor(), arguments['maillist'], arguments['sender'], arguments['body'])
 
 		# Commit any pending operation in the database.
-		connection.commit()
+		self.connection.commit()
 
 		# If everything is OK, return 0
 		return 0
@@ -133,29 +134,29 @@ class simplelist:
 			raise ValueError('Wrong RDMS engine selected', database['rdms'])
 		return connection
 
-	def send_help(self, mta, maillist, address): #7
+	def send_help(self, maillist, address): #7
 		""" Send help template information to the requester """
-		self.send_template(mta, maillist, address, "help")
+		self.send_template(maillist, address, "help")
 
-	def send_error(self, mta, maillist, address):
+	def send_error(self, maillist, address):
 		""" Send a failure error to the sender """
-		self.send_template(mta, maillist, address, "error")
+		self.send_template(maillist, address, "error")
 
-	def unsubscribe(self, cursor, mta, maillist, address):
+	def unsubscribe(self, cursor, maillist, address):
 		""" Remove the requester from the maillist """
 		sql = f"DELETE FROM subscriptions WHERE maillist='{maillist}' AND subscriptor='{address}';"
 		self.dprint(6, f'Executing SQL: {sql}')
 		cursor.execute(sql)
-		self.send_template(mta, maillist, address, "unsubscribe")
+		self.send_template(maillist, address, "unsubscribe")
 
-	def subscribe(self, cursor, mta, maillist, address):
+	def subscribe(self, cursor, maillist, address):
 		""" Add the requester to the maillist """
 		sql = f"INSERT OR IGNORE INTO subscriptions VALUES ('{maillist}','{address}')"
 		self.dprint(6, f'Executing SQL: {sql}')
 		cursor.execute(sql)
-		self.send_template(mta, maillist, address, "subscribe")
+		self.send_template(maillist, address, "subscribe")
 
-	def forward(self, cursor, mta, maillist, address, body):
+	def forward(self, cursor, maillist, address, body):
 		""" Send reciveid mail to all users in the maillist """
 		sql = f"SELECT subscriptor FROM subscriptions WHERE maillist = '{maillist}' AND subscriptor <> '{address}';"
 		self.dprint(6, f'Executing SQL: {sql}')
@@ -167,28 +168,28 @@ class simplelist:
 			if address is None:
 				EOC = True
 			else:
-				self.send_mail(mta, maillist, address[0], body)
+				self.send_mail(maillist, address[0], body)
 
-	def send_mail(self, mta, sender, address, body):
+	def send_mail(self, sender, address, body):
 		""" Sends and email through the MTA """
 		self.dprint(5, f"Sending email from:{sender} to:{address}")
-		self.dprint(6, f"MTA connection: {mta}")
-		server = smtplib.SMTP(mta['host'], mta['port'])
+		self.dprint(6, f"MTA connection: {self.mta}")
+		server = smtplib.SMTP(self.mta['host'], self.mta['port'])
 		server.set_debuglevel(self.debug_level >= 7)
 		server.sendmail(sender, address, body)
 		server.quit()
 
-	def send_template(self, mta, sender, address, template):
+	def send_template(self, sender, address, template):
 		""" Sends a template email to comunicate commands information """
-		template_file = mta['templates'] + f"/{template}.eml"
+		template_file = self.mta['templates'] + f"/{template}.eml"
 		self.dprint(6, f"Opening template {template_file}")
 		with open(template_file, "r") as file_object:
 			template = file_object.read()
 			template = template.replace("{maillist}", sender)
-			template = template.replace("{domain}", mta['domain'])
+			template = template.replace("{domain}", self.mta['domain'])
 			template = template + "\n\n" + ('-'*80)
 			template = template + "\nMake your mail lists simply with Simplelist\n"
-			self.send_mail(mta, sender, address, template)
+			self.send_mail(sender, address, template)
 
 
 if __name__ == '__main__':
