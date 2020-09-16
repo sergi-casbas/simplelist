@@ -86,7 +86,7 @@ class simplelist:
 			arguments['maillist'] = arguments['local']+'@'+arguments['domain']
 		arguments['body'] = mailbody.read()
 
-		# TO-DO white and blacklists. #2 i #3
+		# TODO white and blacklists. #2 i #3
 
 		# Bouncing protection with auto-reply #1
 		if "Auto-Submitted:" in arguments['body'] and  "Auto-Submitted: no" not in arguments['body']:
@@ -197,18 +197,40 @@ class simplelist:
 			self.send_mail(sender, address, template)
 
 
+def run_normal():
+	""" Execute it with normal behaviour """
+	procesor = simplelist(sys.argv)
+	sys.exit(procesor.main(sys.stdin))
+
+def run_unit_tests():
+	# Dummy smtp server: python -m smtpd -c DebuggingServer -n localhost:2525
+	""" Execute unit tests included in this code. Usefull to debug """
+	vfrom = "me@dummy.domain"
+	domain = "lists.dummy.domain"
+	run_unit_test(vfrom, "subscribe", domain, "./unit-test/empty.eml")
+	run_unit_test(vfrom, "help", domain, "./unit-test/empty.eml")
+	run_unit_test(vfrom, "help-me", domain, "./unit-test/empty.eml")
+	run_unit_test(vfrom, "subscribe-unit-test", domain, "./unit-test/empty.eml")
+	run_unit_test(vfrom, "unsubscribe-unit-test", domain, "./unit-test/empty.eml")
+	run_unit_test(vfrom, "subscribe-unit-test", domain, "./unit-test/empty.eml")
+	run_unit_test(vfrom, "unit-test", domain, "./unit-test/empty.eml")
+	run_unit_test(vfrom, "unit-test", domain, "./unit-test/body-auto-generated-no.eml")
+	run_unit_test(vfrom, "unit-test", domain, "./unit-test/body-auto-generated.eml")
+	run_unit_test(vfrom, "unit-test", domain, "./unit-test/body-auto-submitted.eml")
+	run_unit_test("alter.ego@dummy.domain", "subscribe-unit-test", domain, "./unit-test/empty.eml")
+
+
+def run_unit_test(sender, local, domain, bodyfilepath):
+	""" Run unitary test """
+	argv = {f"--sender={sender}", f"--local={local}", f"--domain={domain}"}
+	procesor = simplelist(argv)
+	procesor.main(open(bodyfilepath, "rt"))
+
 if __name__ == '__main__':
+	""" Main routine called when invoked as script """
 	import sys
-	import traceback
 
-	procesor = simplelist()
-
-	sys.exit(procesor.main(sys.argv, sys.stdin))
-
-	#try:
-	#	sys.exit(procesor.main(sys.argv, sys.stdin))
-	#except Exception as error:
-	#	exc_type, exc_value, exc_traceback = sys.exc_info()
-	#	trace = traceback.extract_tb(exc_traceback, limit=-1)
-	#	self.dprint(0, f'{type(exc_value)} {trace.format()[0]}')
-	#	sys.exit(1)
+	if '--unit-tests' in sys.argv:
+		run_unit_tests()
+	else:
+		run_normal()
