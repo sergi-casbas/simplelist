@@ -75,7 +75,7 @@ class simplelist:
 		arguments['command'] = arguments['local'].split("-", 1)[0]
 		if arguments['command'] in 'help':
 			arguments['maillist'] = arguments['local']+'@'+arguments['domain']
-		elif arguments['command'] in 'unsubscribe, subscribe':
+		elif arguments['command'] in 'unsubscribe, subscribe, members':
 			try:
 				arguments['maillist'] = arguments['local'].split("-", 1)[1]+'@'+arguments['domain']
 			except IndexError:
@@ -96,17 +96,28 @@ class simplelist:
 			self.dprint(4, "Auto-Generated message, ignore it")
 			return 0 # If is a auto-submited ignoring it.
 
-		# Execute required operation.
+		# TODO Confusing code, needs refactor.
+		# Execute required validations and operations.
 		self.dprint(5, f"Executing {arguments['command']} command")
 		if arguments['command'] in 'help, error':
 			self.send_template('no-reply@'+arguments['domain'], arguments['sender'], arguments['command'])
 		elif arguments['command'] == 'unsubscribe':
-			self.unsubscribe(arguments['maillist'], arguments['sender'])
+			if self.check_membership(arguments['maillist'], arguments['sender']):
+				self.unsubscribe(arguments['maillist'], arguments['sender'])
+			else:
+				self.send_template('no-reply@'+arguments['domain'], arguments['sender'], "error")
 		elif arguments['command'] == 'subscribe':
 			self.subscribe_request_authorization(arguments['maillist'], arguments['sender'])
+		elif arguments['command'] == 'members':
+			if self.check_membership(arguments['maillist'], arguments['sender']):
+				self.members(arguments['maillist'], arguments['sender'])
+			else:
+				self.send_template('no-reply@'+arguments['domain'], arguments['sender'], "error")
 		else:
-			# TODO Require user subscription to forward #4
-			self.forward(arguments['maillist'], arguments['sender'], arguments['body'])
+			if self.check_membership(arguments['maillist'], arguments['sender']):
+				self.forward(arguments['maillist'], arguments['sender'], arguments['body'])
+			else: 
+				self.send_template('no-reply@'+arguments['domain'], arguments['sender'], "error")
 
 		# Commit any pending operation in the database.
 		self.connection.commit()
@@ -160,6 +171,31 @@ class simplelist:
 		self.connection.cursor().execute(sql)
 		self.send_template(maillist, address, "subscribe")
 
+	def check_membership(self, maillist, address):
+		""" Check if a addres exists in a maillist. """
+		self.dprint(6, f'Checking membership')
+		sql = f"SELECT count(*)=1 FROM subscriptions WHERE maillist = '{maillist}' and subscriptor='{address}';"
+		self.dprint(6, f'Executing SQL: {sql}')
+		cursor = self.connection.cursor()
+		cursor.execute(sql)
+		row = cursor.fetchone()
+		return row[0]
+
+
+	def members(self, maillist, address):
+		""" Send the complete list of members of a maillist """
+
+		self.dprint(6, f'Recovering list members')
+		sql = f"SELECT subscriptor FROM subscriptions WHERE maillist = '{maillist}' ORDER BY subscriptor;"
+		self.dprint(6, f'Executing SQL: {sql}')
+		cursor = self.connection.cursor()
+		cursor.execute(sql)
+		subscriptors = []
+		for row in cursor.fetchall():
+			subscriptors.append(row[0])
+
+		self.send_template(maillist, address, "members", [['list', '\n'.join(subscriptors)]])
+
 	def forward(self, maillist, address, body):
 		""" Send reciveid mail to all users in the maillist """
 		sql = f"SELECT subscriptor FROM subscriptions \
@@ -196,7 +232,6 @@ class simplelist:
 			template = template + "\nMake your mail lists simply with Simplelist\n"
 			self.send_mail(sender, address, template)
 
-
 def run_normal():
 	""" Execute it with normal behaviour """
 	procesor = simplelist(sys.argv)
@@ -218,14 +253,15 @@ def run_unit_tests():
 	run_unit_test(vfrom, "unit-test", domain, "./unit-test/body-auto-generated.eml")
 	run_unit_test(vfrom, "unit-test", domain, "./unit-test/body-auto-submitted.eml")
 	run_unit_test("alter.ego@dummy.domain", "subscribe-unit-test", domain, "./unit-test/empty.eml")
-
+	run_unit_test(vfrom, "members-unit-test", domain, "./unit-test/empty.eml")
+	run_unit_test("inexistent@dummy.domain", "members-unit-test", domain, "./unit-test/empty.eml")
 
 def run_unit_test(sender, local, domain, bodyfilepath):
 	""" Run unitary test """
 	argv = sys.argv + [f"--sender={sender}", f"--local={local}", f"--domain={domain}"]
 	procesor = simplelist(argv)
 	procesor.main(open(bodyfilepath, "rt"))
-	time.sleep(1)
+	time.sleep(0.2)
 
 if __name__ == '__main__':
 	import sys
