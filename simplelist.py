@@ -21,7 +21,8 @@
 #  MA 02110-1301, USA.
 """ Simple implementation mail lists with getmail and SMTP """
 import json
-import smtplib
+from lib import smtplib
+from lib.debug import dprint
 
 class simplelist:
 	""" Main class """
@@ -60,12 +61,11 @@ class simplelist:
 		self.mta = self.configs['mta']
 		self.mta['domain'] = self.arguments['domain']
 
-	def dprint(self, level, debug_message): # TO-DO Improve as class.
+	def dprint(self, level, debug_message): # TODO Improve as class.
 		"""" Call external class dprint function """
 		#import logging
 		#logging.basicConfig(level=logging.DEBUG)
 		#logging.debug(debug_message)
-		from debug import dprint
 		dprint(self.debug_level, level, debug_message)
 
 	def main(self, mailbody):
