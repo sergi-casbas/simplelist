@@ -167,14 +167,10 @@ class simplelist:
 		self.dprint(6, f'Executing SQL: {sql}')
 		cursor = self.connection.cursor()
 		cursor.execute(sql)
-		EOC = False
+
 		body = f"Reply-To: {maillist}\n" + body
-		while not EOC:
-			address = cursor.fetchone()
-			if address is None:
-				EOC = True
-			else:
-				self.send_mail(maillist, address[0], body)
+		for row in cursor.fetchall():
+			self.send_mail(maillist, row[0], body)
 
 	def send_mail(self, sender, address, body):
 		""" Sends and email through the MTA """
