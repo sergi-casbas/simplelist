@@ -8,14 +8,14 @@ other tool rathern than your email.
 
 The mail list service supports following commands:
 
-help@{domain}								This help
-subscribe-[mail list name]@{domain}			Subscribe to a mail list
-unsubscribe-[mail list name]@{domain}		Unsubscribe of a mail list
+help@{domain}                            This help
+subscribe-[mail list name]@{domain}      Subscribe to a mail list
+unsubscribe-[mail list name]@{domain}    Unsubscribe of a mail list
 
 To send a message to the list simply ... send it to the [mail list name]@{domain}
 
 
-Simplelist v.0.2
+Simplelist v.0.4
 Copyright 2020 Sergi Casbas <sergi@casbas.cat>
 
 This program is free software; you can redistribute it and/or modify
