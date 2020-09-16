@@ -223,14 +223,13 @@ def run_unit_tests():
 
 def run_unit_test(sender, local, domain, bodyfilepath):
 	""" Run unitary test """
-	argv = {f"--sender={sender}", f"--local={local}", f"--domain={domain}"}
+	argv = sys.argv + [f"--sender={sender}", f"--local={local}", f"--domain={domain}"]
 	procesor = simplelist(argv)
 	procesor.main(open(bodyfilepath, "rt"))
+	time.sleep(1)
 
 if __name__ == '__main__':
-	""" Main routine called when invoked as script """
-	import sys
-
+	import sys, time
 	if '--unit-tests' in sys.argv:
 		run_unit_tests()
 	else:
