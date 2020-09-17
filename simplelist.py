@@ -116,7 +116,7 @@ class simplelist:
 		else:
 			if self.check_membership(arguments['maillist'], arguments['sender']):
 				self.forward(arguments['maillist'], arguments['sender'], arguments['body'])
-			else: 
+			else:
 				self.send_template('no-reply@'+arguments['domain'], arguments['sender'], "error")
 
 		# Commit any pending operation in the database.
@@ -144,6 +144,17 @@ class simplelist:
 			raise ValueError('Wrong RDMS engine selected', database['rdms'])
 		return connection
 
+	def execute(self, sql):
+		""" Execute SQL in the database, no response expected """
+		self.dprint(6, f'Executing SQL: {sql}')
+		self.connection.cursor().execute(sql)
+
+	def cursor(self, sql):
+		""" Open a query on the database, return a cursor to the results """
+		self.dprint(6, f'Open query SQL: {sql}')
+		cursor = self.connection.cursor()
+		cursor.execute(sql)
+		return cursor
 	def send_help(self, maillist, address): #7
 		""" Send help template information to the requester """
 		self.send_template(maillist, address, "help")
@@ -154,9 +165,8 @@ class simplelist:
 
 	def unsubscribe(self, maillist, address):
 		""" Remove the requester from the maillist """
-		sql = f"DELETE FROM subscriptions WHERE maillist='{maillist}' AND subscriptor='{address}';"
-		self.dprint(6, f'Executing SQL: {sql}')
-		self.connection.cursor().execute(sql)
+		self.execute(f"DELETE FROM subscriptions " + \
+			"WHERE maillist='{maillist}' AND subscriptor='{address}';")
 		self.send_template(maillist, address, "unsubscribe")
 
 	def subscribe_request_authorization(self, maillist, address):
@@ -166,34 +176,25 @@ class simplelist:
 
 	def subscribe(self, maillist, address):
 		""" Add the requester to the maillist """
-		sql = f"INSERT OR IGNORE INTO subscriptions VALUES ('{maillist}','{address}')"
-		self.dprint(6, f'Executing SQL: {sql}')
-		self.connection.cursor().execute(sql)
+		self.execute(f"INSERT OR IGNORE INTO subscriptions VALUES ('{maillist}','{address}')")
 		self.send_template(maillist, address, "subscribe")
+
 
 	def check_membership(self, maillist, address):
 		""" Check if a addres exists in a maillist. """
 		self.dprint(6, f'Checking membership')
-		sql = f"SELECT count(*)=1 FROM subscriptions WHERE maillist = '{maillist}' and subscriptor='{address}';"
-		self.dprint(6, f'Executing SQL: {sql}')
-		cursor = self.connection.cursor()
-		cursor.execute(sql)
-		row = cursor.fetchone()
+		sql = "SELECT count(*)=1 FROM subscriptions WHERE " + \
+			f"maillist = '{maillist}' and subscriptor='{address}';"
+		row = self.cursor(sql).fetchone()
 		return row[0]
-
 
 	def members(self, maillist, address):
 		""" Send the complete list of members of a maillist """
-
 		self.dprint(6, f'Recovering list members')
 		sql = f"SELECT subscriptor FROM subscriptions WHERE maillist = '{maillist}' ORDER BY subscriptor;"
-		self.dprint(6, f'Executing SQL: {sql}')
-		cursor = self.connection.cursor()
-		cursor.execute(sql)
 		subscriptors = []
-		for row in cursor.fetchall():
+		for row in self.cursor(sql).fetchall():
 			subscriptors.append(row[0])
-
 		self.send_template(maillist, address, "members", [['list', '\n'.join(subscriptors)]])
 
 	def forward(self, maillist, address, body):
@@ -231,6 +232,7 @@ class simplelist:
 			template = template + "\n\n" + ('-'*80)
 			template = template + "\nMake your mail lists simply with Simplelist\n"
 			self.send_mail(sender, address, template)
+
 
 def run_normal():
 	""" Execute it with normal behaviour """
