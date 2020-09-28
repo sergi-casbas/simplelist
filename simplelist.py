@@ -83,6 +83,12 @@ class simplelist:
 			except IndexError:
 				arguments['command'] = 'error'
 				arguments['maillist'] = arguments['local']+'@'+arguments['domain']
+		elif arguments['command'] in 'grant':
+			try:
+				arguments['maillist'] = arguments['local'].split("-", 1)[1]
+			except IndexError:
+				arguments['command'] = 'error'
+				arguments['maillist'] = arguments['local']+'@'+arguments['domain']
 		else:
 			arguments['command'] = 'forward'
 			arguments['maillist'] = arguments['local']+'@'+arguments['domain']
@@ -110,6 +116,8 @@ class simplelist:
 				self.send_template('no-reply@'+arguments['domain'], arguments['sender'], "error")
 		elif arguments['command'] == 'subscribe':
 			self.subscribe_request_authorization(arguments['maillist'], arguments['sender'])
+		elif arguments['command'] == 'grant':
+			self.subscribe_accept_authorization(arguments['maillist'])
 		elif arguments['command'] == 'members':
 			if self.check_membership(arguments['maillist'], arguments['sender']):
 				self.members(arguments['maillist'], arguments['sender'])
@@ -157,6 +165,7 @@ class simplelist:
 		cursor = self.connection.cursor()
 		cursor.execute(sql)
 		return cursor
+
 	def send_help(self, maillist, address): #7
 		""" Send help template information to the requester """
 		self.send_template(maillist, address, "help")
@@ -165,20 +174,51 @@ class simplelist:
 		""" Send a failure error to the sender """
 		self.send_template(maillist, address, "error")
 
-
-	def subscribe_request_authorization(self, maillist, address):
-		""" Request admin authorization to subscribe (if required) """
-		self.subscribe(maillist, address)
-		return 0
-
 	def subscribe(self, maillist, address):
 		""" Add the requester to the maillist """
 		self.execute(f"INSERT OR IGNORE INTO subscriptions VALUES ('{maillist}','{address}')")
 		self.send_template(maillist, address, "subscribe")
 
+	def subscribe_request_authorization(self, maillist, address):
+		""" Request admin authorization to subscribe if required """
+		if not self.check_private(maillist):
+			self.subscribe(maillist, address)
+		else:
+			self.dprint(5, "Requesting authorization")
+			token = self.generate_token()
 
+			# Remove previous requests if exists.
+			sql = "DELETE FROM authorization WHERE " + \
+				f"maillist='{maillist}' AND subscriptor='{address}'"
+			self.execute(sql)
+
+			# Generate new request.
+			sql = "INSERT INTO authorization VALUES" + \
+				f"('{token}', '{maillist}','{address}')"
+			self.execute(sql)
+
+			# Get admin mail address.
+			sql = f"SELECT administrator FROM private WHERE maillist='{maillist}';"
+			row = self.cursor(sql).fetchone()
+			administrator = row[0]
+
+			# Send notification to the admin.
+			self.send_template(maillist, f"{administrator}", "authorization", {'token': token})
+		return 0
+
+	def subscribe_accept_authorization(self, token):
+		""" Accept authorization token and subscribe user to the list. """
+		# Get authorization from database.
+		sql = f"SELECT maillist, subscriptor FROM authorization WHERE authorization='{token}';"
 		row = self.cursor(sql).fetchone()
-		return row[0]
+		if row is None:
+			self.send_template('no-reply@'+self.arguments['domain'], self.arguments['sender'], "error")
+		else:
+			# Act on behalf the original requester.
+			self.arguments['maillist'] = row[0]
+			self.arguments['sender'] = row[1]
+			self.subscribe(row[0], row[1])
+
 	def unsubscribe(self, maillist, address):
 		""" Remove the requester from the maillist """
 		self.execute(f"DELETE FROM subscriptions " + \
@@ -205,6 +245,11 @@ class simplelist:
 		body = f"Reply-To: {maillist}\n" + body
 		for row in cursor.fetchall():
 			self.send_mail(maillist, row[0], body)
+
+	def check_private(self, maillist):
+		""" Check if a maillist is declared private in the database """
+		sql = f"SELECT count(*)=1 FROM private WHERE maillist='{maillist}';"
+		return self.cursor(sql).fetchone()[0]
 
 	def check_membership(self, maillist, address):
 		""" Check if a addres exists in a maillist. """
@@ -237,6 +282,14 @@ class simplelist:
 			template = template + "\nMake your mail lists simply with Simplelist\n"
 			self.send_mail(sender, address, template)
 
+	def generate_token(self):
+		""" Generate a token """
+		import secrets
+		if 'unit-tests' in self.arguments:
+			return "ffffffff"
+		else:
+			return secrets.token_hex(4)
+
 
 def run_normal():
 	""" Execute it with normal behaviour """
@@ -261,13 +314,16 @@ def run_unit_tests():
 	run_unit_test("alter.ego@dummy.domain", "subscribe-unit-test", domain, "./unit-test/empty.eml")
 	run_unit_test(vfrom, "members-unit-test", domain, "./unit-test/empty.eml")
 	run_unit_test("inexistent@dummy.domain", "members-unit-test", domain, "./unit-test/empty.eml")
+	run_unit_test(vfrom, "grant-00000000", domain, "./unit-test/empty.eml")
+	run_unit_test(vfrom, "subscribe-private", domain, "./unit-test/empty.eml")
+	run_unit_test(vfrom, "grant-ffffffff", domain, "./unit-test/empty.eml")
 
 def run_unit_test(sender, local, domain, bodyfilepath):
 	""" Run unitary test """
 	argv = sys.argv + [f"--sender={sender}", f"--local={local}", f"--domain={domain}"]
 	procesor = simplelist(argv)
 	procesor.main(open(bodyfilepath, "rt"))
-	time.sleep(0.2)
+	time.sleep(2)
 
 if __name__ == '__main__':
 	import sys

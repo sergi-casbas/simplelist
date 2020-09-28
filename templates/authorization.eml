@@ -1,0 +1,10 @@
+Auto-Submitted: auto-replied
+Subject: Mail list subscription authorization request
+
+{sender} requested to be member of {maillist}, you are registered as list administrator.
+
+To accept the request and grant acces send an email to:
+grant-{token}@{domain}
+This request will be valid for 1 hour.
+
+To deny the request no further actions are required.
