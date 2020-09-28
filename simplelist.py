@@ -197,7 +197,7 @@ class simplelist:
 		subscriptors = []
 		for row in self.cursor(sql).fetchall():
 			subscriptors.append(row[0])
-		self.send_template(maillist, address, "members", [['list', '\n'.join(subscriptors)]])
+		self.send_template(maillist, address, "members", {'members': '\n'.join(subscriptors)})
 
 	def forward(self, maillist, address, body):
 		""" Send reciveid mail to all users in the maillist """
@@ -220,17 +220,16 @@ class simplelist:
 		server.sendmail(sender, address, body)
 		server.quit()
 
-	def send_template(self, sender, address, template, extra_replace=None):
+	def send_template(self, sender, address, template, replacements={}):
 		""" Sends a template email to comunicate commands information """
 		template_file = self.mta['templates'] + f"/{template}.eml"
 		self.dprint(6, f"Opening template {template_file}")
 		with open(template_file, "r") as file_object:
 			template = file_object.read()
-			template = template.replace("{maillist}", sender)
-			template = template.replace("{domain}", self.mta['domain'])
-			if extra_replace is not None:
-				for replace_pair in extra_replace:
-					template = template.replace("{"+replace_pair[0]+"}", replace_pair[1])
+			replacements = {**replacements, **self.mta}
+			replacements = {**replacements, **self.arguments}
+			for key, value  in replacements.items():
+				template = template.replace("{"+key+"}", str(value))
 			template = template + "\n\n" + ('-'*80)
 			template = template + "\nMake your mail lists simply with Simplelist\n"
 			self.send_mail(sender, address, template)
