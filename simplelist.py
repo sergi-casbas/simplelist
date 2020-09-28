@@ -33,9 +33,11 @@ class simplelist:
 		self.connection = None
 
 		# Convert arguments into a indexed list.
-		for argument in sys_arguments:
+		for argument in sys_arguments[1:]:
 			splited = argument.split("=")
-			if len(splited) == 2:
+			if len(splited) == 1:
+				self.arguments[splited[0][2:]] = True
+			elif len(splited) == 2:
 				self.arguments[splited[0][2:]] = splited[1]
 
 		# Establish debug level by argument or by default (need here to verbose config read)
