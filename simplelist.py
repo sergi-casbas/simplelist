@@ -165,11 +165,6 @@ class simplelist:
 		""" Send a failure error to the sender """
 		self.send_template(maillist, address, "error")
 
-	def unsubscribe(self, maillist, address):
-		""" Remove the requester from the maillist """
-		self.execute(f"DELETE FROM subscriptions " + \
-			"WHERE maillist='{maillist}' AND subscriptor='{address}';")
-		self.send_template(maillist, address, "unsubscribe")
 
 	def subscribe_request_authorization(self, maillist, address):
 		""" Request admin authorization to subscribe (if required) """
@@ -182,13 +177,13 @@ class simplelist:
 		self.send_template(maillist, address, "subscribe")
 
 
-	def check_membership(self, maillist, address):
-		""" Check if a addres exists in a maillist. """
-		self.dprint(6, f'Checking membership')
-		sql = "SELECT count(*)=1 FROM subscriptions WHERE " + \
-			f"maillist = '{maillist}' and subscriptor='{address}';"
 		row = self.cursor(sql).fetchone()
 		return row[0]
+	def unsubscribe(self, maillist, address):
+		""" Remove the requester from the maillist """
+		self.execute(f"DELETE FROM subscriptions " + \
+			"WHERE maillist='{maillist}' AND subscriptor='{address}';")
+		self.send_template(maillist, address, "unsubscribe")
 
 	def members(self, maillist, address):
 		""" Send the complete list of members of a maillist """
@@ -210,6 +205,14 @@ class simplelist:
 		body = f"Reply-To: {maillist}\n" + body
 		for row in cursor.fetchall():
 			self.send_mail(maillist, row[0], body)
+
+	def check_membership(self, maillist, address):
+		""" Check if a addres exists in a maillist. """
+		self.dprint(6, f'Checking membership')
+		sql = "SELECT count(*)=1 FROM subscriptions WHERE " + \
+			f"maillist = '{maillist}' and subscriptor='{address}';"
+		row = self.cursor(sql).fetchone()
+		return row[0]
 
 	def send_mail(self, sender, address, body):
 		""" Sends and email through the MTA """
