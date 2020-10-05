@@ -49,11 +49,15 @@ class simplelist:
 		else:
 			self.debug_level = 0
 
-		# Read configuration file.
-		if 'config' in self.arguments:
-			self.configs = self.read_configuration(self.arguments['config'])
-		else:
-			self.configs = self.read_configuration("./default.json")
+		# Read default configuration file.
+		self.configs = self.read_configuration("./default.json")
+		if 'config' in self.arguments:  # Overload with user defined configurations.
+			for key,value  in self.read_configuration(self.arguments['config']).items():
+				if isinstance(value, dict): #TODO Infinite recursive.
+					for subkey, subvalue in value.items():
+						self.configs[key][subkey] = subvalue
+				else:
+					self.configs[key] = value
 
 		# Set verbosity if no argument is set and exists in config file.
 		if 'verbose' not in self.arguments and 'verbose' in self.configs:
