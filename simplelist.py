@@ -252,10 +252,14 @@ class SimpleList:
 		self.dprint(6, f'Executing SQL: {sql}')
 		cursor = self.connection.cursor()
 		cursor.execute(sql)
-		#TODO Add opt-out headers
-		body = f"Reply-To: {maillist}\n" + body
+		headers = f"Reply-To: {maillist}\n"
+		headers = headers + f"List-ID: {maillist}\n"
+		headers = headers + f"List-Help: help@{self.arguments['domain']}\n"
+		headers = headers + f"List-Subscribe: <mailto: subscribe-{maillist}>\n"
+		headers = headers + f"List-Unsubscribe: <mailto: unsubscribe-{maillist}>\n"
+
 		for row in cursor.fetchall():
-			self.send_mail(maillist, row[0], body)
+			self.send_mail(maillist, row[0], headers + body)
 
 	def check_private(self, maillist):
 		""" Check if a maillist is declared private in the database """
