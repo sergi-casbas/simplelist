@@ -27,7 +27,7 @@ import secrets
 from lib import smtplib
 from lib.debug import dprint
 
-class simplelist:
+class SimpleList:
 	""" Main class """
 	def __init__(self, sys_arguments):
 		# class variables.
@@ -146,8 +146,8 @@ class simplelist:
 		""" Read configuration JSON and returns as dictionary """
 		# read JSON
 		self.dprint(5, f"Reading configuration file from {config_file}")
-		with open(config_file, 'r') as JSON_file:
-			configurations = json.loads(JSON_file.read())
+		with open(config_file, 'r') as json_file:
+			configurations = json.loads(json_file.read())
 		return configurations
 
 	def open_connection(self, database):
@@ -189,6 +189,10 @@ class simplelist:
 		""" Request admin authorization to subscribe if required """
 		if not self.check_private(maillist):
 			self.subscribe(maillist, address)
+		#TODO Subscripcion delegada desde cuenta de administrador.
+		# elif Mirar que address sea admin de la llista.
+		# extreure addres del subject.
+		# self.subscribe(maillist, subject)
 		else:
 			self.dprint(5, "Requesting authorization")
 			token = self.generate_token()
@@ -248,7 +252,7 @@ class simplelist:
 		self.dprint(6, f'Executing SQL: {sql}')
 		cursor = self.connection.cursor()
 		cursor.execute(sql)
-
+		#TODO Add opt-out headers
 		body = f"Reply-To: {maillist}\n" + body
 		for row in cursor.fetchall():
 			self.send_mail(maillist, row[0], body)
@@ -290,16 +294,15 @@ class simplelist:
 			self.send_mail(sender, address, template)
 
 	def generate_token(self):
-		""" Generate a token """
+		""" Generate a random token """
 		if 'unit-tests' in self.arguments:
 			return "ffffffff"
 		else:
 			return secrets.token_hex(4)
 
-
 def run_normal():
 	""" Execute it with normal behaviour """
-	procesor = simplelist(sys.argv)
+	procesor = SimpleList(sys.argv)
 	sys.exit(procesor.main(sys.stdin))
 
 def run_unit_tests():
@@ -327,9 +330,9 @@ def run_unit_tests():
 def run_unit_test(sender, local, domain, bodyfilepath):
 	""" Run unitary test """
 	argv = sys.argv + [f"--sender={sender}", f"--local={local}", f"--domain={domain}"]
-	procesor = simplelist(argv)
+	procesor = SimpleList(argv)
 	procesor.main(open(bodyfilepath, "rt"))
-	time.sleep(2)
+	time.sleep(1)
 
 if __name__ == '__main__':
 	import time
