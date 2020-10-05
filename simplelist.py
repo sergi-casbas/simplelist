@@ -20,7 +20,10 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 """ Simple implementation mail lists with getmail and SMTP """
+import sys
+import sqlite3
 import json
+import secrets
 from lib import smtplib
 from lib.debug import dprint
 
@@ -147,7 +150,6 @@ class simplelist:
 		""" Open database based on config and return an open cursor to it """
 		connection = None
 		if database['rdms'] == "sqlite":
-			import sqlite3
 			self.dprint(6, "Connection to database sqlite://" + database['path'])
 			connection = sqlite3.connect(database['path'])
 		else:
@@ -198,6 +200,7 @@ class simplelist:
 			self.execute(sql)
 
 			# Get admin mail address.
+			# TODO Convert as function to reuse
 			sql = f"SELECT administrator FROM private WHERE maillist='{maillist}';"
 			row = self.cursor(sql).fetchone()
 			administrator = row[0]
@@ -221,13 +224,13 @@ class simplelist:
 
 	def unsubscribe(self, maillist, address):
 		""" Remove the requester from the maillist """
-		self.execute(f"DELETE FROM subscriptions " + \
-			"WHERE maillist='{maillist}' AND subscriptor='{address}';")
+		self.execute("DELETE FROM subscriptions " + \
+			f"WHERE maillist='{maillist}' AND subscriptor='{address}';")
 		self.send_template(maillist, address, "unsubscribe")
 
 	def members(self, maillist, address):
 		""" Send the complete list of members of a maillist """
-		self.dprint(6, f'Recovering list members')
+		self.dprint(6, 'Recovering list members')
 		sql = f"SELECT subscriptor FROM subscriptions WHERE maillist = '{maillist}' ORDER BY subscriptor;"
 		subscriptors = []
 		for row in self.cursor(sql).fetchall():
@@ -253,7 +256,7 @@ class simplelist:
 
 	def check_membership(self, maillist, address):
 		""" Check if a addres exists in a maillist. """
-		self.dprint(6, f'Checking membership')
+		self.dprint(6, 'Checking membership')
 		sql = "SELECT count(*)=1 FROM subscriptions WHERE " + \
 			f"maillist = '{maillist}' and subscriptor='{address}';"
 		row = self.cursor(sql).fetchone()
@@ -284,7 +287,6 @@ class simplelist:
 
 	def generate_token(self):
 		""" Generate a token """
-		import secrets
 		if 'unit-tests' in self.arguments:
 			return "ffffffff"
 		else:
@@ -326,7 +328,6 @@ def run_unit_test(sender, local, domain, bodyfilepath):
 	time.sleep(2)
 
 if __name__ == '__main__':
-	import sys
 	import time
 	if '--unit-tests' in sys.argv:
 		run_unit_tests()
