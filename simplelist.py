@@ -70,37 +70,52 @@ class SimpleList:
 		self.mta = self.configs['mta']
 		self.mta['domain'] = self.arguments['domain']
 
+
+	def extract_command_and_maillist(self, arguments):
+		""" Extract command and maillist name from arguments """
+		command = self.arguments['local'].split("-", 1)[0]
+		if command in 'help':
+			maillist = arguments['local']+'@'+arguments['domain']
+		elif command in 'unsubscribe, subscribe, members':
+			try:
+				maillist = arguments['local'].split("-", 1)[1]+'@'+arguments['domain']
+			except IndexError:
+				command = 'error'
+				maillist = arguments['local']+'@'+arguments['domain']
+		elif command in 'grant':
+			try:
+				maillist = arguments['local'].split("-", 1)[1]
+			except IndexError:
+				command = 'error'
+				maillist = arguments['local']+'@'+arguments['domain']
+		else:
+			command = 'forward'
+			maillist = arguments['local']+'@'+arguments['domain']
+
+		# Store values to class level dictionary
+		self.arguments['maillist'] = maillist
+		self.arguments['command'] = command
+
+		# Return both values
+		return command, maillist
+
 	def main(self, mailbody):
 		""" Main proceure orchestrator """
 		# Extract if exist the command from the local argument.
+		command, maillist = self.extract_command_and_maillist(self.arguments)
 		arguments = self.arguments
-		command = arguments['local'].split("-", 1)[0]
-		if command in 'help':
-			arguments['maillist'] = arguments['local']+'@'+arguments['domain']
-		elif command in 'unsubscribe, subscribe, members':
-			try:
-				arguments['maillist'] = arguments['local'].split("-", 1)[1]+'@'+arguments['domain']
-			except IndexError:
-				command = 'error'
-				arguments['maillist'] = arguments['local']+'@'+arguments['domain']
-		elif command in 'grant':
-			try:
-				arguments['maillist'] = arguments['local'].split("-", 1)[1]
-			except IndexError:
-				command = 'error'
-				arguments['maillist'] = arguments['local']+'@'+arguments['domain']
-		else:
-			command = 'forward'
-			arguments['maillist'] = arguments['local']+'@'+arguments['domain']
-		arguments['body'] = mailbody.read()
+		
+		# Read body and store on global arguments
+		body  = mailbody.read()
+		self.arguments['body'] = body
 
 		# TODO white and blacklists. #2 i #3
 
 		# Bouncing protection with auto-reply #1
-		if "Auto-Submitted:" in arguments['body'] and  "Auto-Submitted: no" not in arguments['body']:
+		if "Auto-Submitted:" in body and  "Auto-Submitted: no" not in body:
 			self.dprint(4, "Auto-Submitted message, ignore it")
 			return 0 # If is a auto-submited ignoring it.
-		if "Auto-Generated:" in arguments['body'] and "Auto-Generated: no" not in arguments['body']:
+		if "Auto-Generated:" in body and "Auto-Generated: no" not in body:
 			self.dprint(4, "Auto-Generated message, ignore it")
 			return 0 # If is a auto-submited ignoring it.
 
@@ -110,22 +125,22 @@ class SimpleList:
 		if command in 'help, error':
 			self.send_template('no-reply@'+arguments['domain'], arguments['sender'], command)
 		elif command == 'unsubscribe':
-			if self.check_membership(arguments['maillist'], arguments['sender']):
-				self.unsubscribe(arguments['maillist'], arguments['sender'])
+			if self.check_membership(maillist, arguments['sender']):
+				self.unsubscribe(maillist, arguments['sender'])
 			else:
 				self.send_template('no-reply@'+arguments['domain'], arguments['sender'], "error")
 		elif command == 'subscribe':
-			self.subscribe_request_authorization(arguments['maillist'], arguments['sender'])
+			self.subscribe_request_authorization(maillist, arguments['sender'])
 		elif command == 'grant':
-			self.subscribe_accept_authorization(arguments['maillist'])
+			self.subscribe_accept_authorization(maillist)
 		elif command == 'members':
-			if self.check_membership(arguments['maillist'], arguments['sender']):
-				self.members(arguments['maillist'], arguments['sender'])
+			if self.check_membership(maillist, arguments['sender']):
+				self.members(maillist, arguments['sender'])
 			else:
 				self.send_template('no-reply@'+arguments['domain'], arguments['sender'], "error")
 		else:
-			if self.check_membership(arguments['maillist'], arguments['sender']):
-				self.forward(arguments['maillist'], arguments['sender'], arguments['body'])
+			if self.check_membership(maillist, arguments['sender']):
+				self.forward(maillist, arguments['sender'], body)
 			else:
 				self.send_template('no-reply@'+arguments['domain'], arguments['sender'], "error")
 
