@@ -70,28 +70,27 @@ class SimpleList:
 		self.mta = self.configs['mta']
 		self.mta['domain'] = self.arguments['domain']
 
-
 	def main(self, mailbody):
 		""" Main proceure orchestrator """
 		# Extract if exist the command from the local argument.
 		arguments = self.arguments
-		arguments['command'] = arguments['local'].split("-", 1)[0]
-		if arguments['command'] in 'help':
+		command = arguments['local'].split("-", 1)[0]
+		if command in 'help':
 			arguments['maillist'] = arguments['local']+'@'+arguments['domain']
-		elif arguments['command'] in 'unsubscribe, subscribe, members':
+		elif command in 'unsubscribe, subscribe, members':
 			try:
 				arguments['maillist'] = arguments['local'].split("-", 1)[1]+'@'+arguments['domain']
 			except IndexError:
-				arguments['command'] = 'error'
+				command = 'error'
 				arguments['maillist'] = arguments['local']+'@'+arguments['domain']
-		elif arguments['command'] in 'grant':
+		elif command in 'grant':
 			try:
 				arguments['maillist'] = arguments['local'].split("-", 1)[1]
 			except IndexError:
-				arguments['command'] = 'error'
+				command = 'error'
 				arguments['maillist'] = arguments['local']+'@'+arguments['domain']
 		else:
-			arguments['command'] = 'forward'
+			command = 'forward'
 			arguments['maillist'] = arguments['local']+'@'+arguments['domain']
 		arguments['body'] = mailbody.read()
 
@@ -107,19 +106,19 @@ class SimpleList:
 
 		# TODO Confusing code, needs refactor.
 		# Execute required validations and operations.
-		self.dprint(5, f"Executing {arguments['command']} command")
-		if arguments['command'] in 'help, error':
-			self.send_template('no-reply@'+arguments['domain'], arguments['sender'], arguments['command'])
-		elif arguments['command'] == 'unsubscribe':
+		self.dprint(5, f"Executing {command} command")
+		if command in 'help, error':
+			self.send_template('no-reply@'+arguments['domain'], arguments['sender'], command)
+		elif command == 'unsubscribe':
 			if self.check_membership(arguments['maillist'], arguments['sender']):
 				self.unsubscribe(arguments['maillist'], arguments['sender'])
 			else:
 				self.send_template('no-reply@'+arguments['domain'], arguments['sender'], "error")
-		elif arguments['command'] == 'subscribe':
+		elif command == 'subscribe':
 			self.subscribe_request_authorization(arguments['maillist'], arguments['sender'])
-		elif arguments['command'] == 'grant':
+		elif command == 'grant':
 			self.subscribe_accept_authorization(arguments['maillist'])
-		elif arguments['command'] == 'members':
+		elif command == 'members':
 			if self.check_membership(arguments['maillist'], arguments['sender']):
 				self.members(arguments['maillist'], arguments['sender'])
 			else:
