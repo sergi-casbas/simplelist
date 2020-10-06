@@ -70,12 +70,6 @@ class SimpleList:
 		self.mta = self.configs['mta']
 		self.mta['domain'] = self.arguments['domain']
 
-	def dprint(self, level, debug_message): # TODO Improve as class.
-		"""" Call external class dprint function """
-		#import logging
-		#logging.basicConfig(level=logging.DEBUG)
-		#logging.debug(debug_message)
-		dprint(self.debug_level, level, debug_message)
 
 	def main(self, mailbody):
 		""" Main proceure orchestrator """
@@ -303,6 +297,13 @@ class SimpleList:
 			return "ffffffff"
 		else:
 			return secrets.token_hex(4)
+
+	def dprint(self, level, debug_message): # TODO Improve as class.
+		"""" Call external class dprint function """
+		#import logging
+		#logging.basicConfig(level=logging.DEBUG)
+		#logging.debug(debug_message)
+		dprint(self.debug_level, level, debug_message)
 
 def run_normal():
 	""" Execute it with normal behaviour """
