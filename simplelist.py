@@ -353,7 +353,6 @@ def run_unit_test(sender, local, domain, bodyfilepath):
 	time.sleep(1)
 
 if __name__ == '__main__':
-	import time
 	if '--unit-tests' in sys.argv:
 		run_unit_tests()
 	else:
