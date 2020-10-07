@@ -70,7 +70,6 @@ class SimpleList:
 		self.mta = self.configs['mta']
 		self.mta['domain'] = self.arguments['domain']
 
-
 	def extract_command_and_maillist(self, arguments):
 		""" Extract command and maillist name from arguments """
 		command = self.arguments['local'].split("-", 1)[0]
@@ -101,15 +100,18 @@ class SimpleList:
 
 	def main(self, mailbody):
 		""" Main proceure orchestrator """
-		# Extract if exist the command from the local argument.
+		# Extract if exist the command and maillist from the local argument.
 		command, maillist = self.extract_command_and_maillist(self.arguments)
 		arguments = self.arguments
 
-		# Read body and store on global arguments
-		body  = mailbody.read()
-		self.arguments['body'] = body
+		# Read body and store on global arguments.
+		self.arguments['body']  = mailbody.read()
+		body = self.arguments['body']
 
-		# TODO white and blacklists. #2 i #3
+		# Store other usefull arguments.
+		domain = arguments['domain']
+		mailfrom = f'no-reply@{domain}'
+		sender = arguments['sender']
 
 		# Bouncing protection with auto-reply #1
 		if "Auto-Submitted:" in body and  "Auto-Submitted: no" not in body:
@@ -123,26 +125,26 @@ class SimpleList:
 		# Execute required validations and operations.
 		self.dprint(5, f"Executing {command} command")
 		if command in 'help, error':
-			self.send_template('no-reply@'+arguments['domain'], arguments['sender'], command)
+			self.send_template(mailfrom, sender, command)
 		elif command == 'unsubscribe':
-			if self.check_membership(maillist, arguments['sender']):
-				self.unsubscribe(maillist, arguments['sender'])
+			if self.check_membership(maillist, sender):
+				self.unsubscribe(maillist, sender)
 			else:
-				self.send_template('no-reply@'+arguments['domain'], arguments['sender'], "error")
+				self.send_template(mailfrom, sender, "error")
 		elif command == 'subscribe':
-			self.subscribe_request_authorization(maillist, arguments['sender'])
+			self.subscribe_request_authorization(maillist, sender)
 		elif command == 'grant':
-			self.subscribe_accept_authorization(maillist)
+			self.subscribe_accept_authorization(mailfrom, sender, maillist)
 		elif command == 'members':
-			if self.check_membership(maillist, arguments['sender']):
-				self.members(maillist, arguments['sender'])
+			if self.check_membership(maillist, sender):
+				self.members(maillist, sender)
 			else:
-				self.send_template('no-reply@'+arguments['domain'], arguments['sender'], "error")
+				self.send_template(mailfrom, sender, "error")
 		else:
-			if self.check_membership(maillist, arguments['sender']):
-				self.forward(maillist, arguments['sender'], body)
+			if self.check_membership(maillist, sender):
+				self.forward(maillist, sender, body)
 			else:
-				self.send_template('no-reply@'+arguments['domain'], arguments['sender'], "error")
+				self.send_template(f'no-reply@{domain}', sender, "error")
 
 		# Commit any pending operation in the database.
 		self.connection.commit()
@@ -225,17 +227,14 @@ class SimpleList:
 			self.send_template(maillist, f"{administrator}", "authorization", {'token': token})
 		return 0
 
-	def subscribe_accept_authorization(self, token):
+	def subscribe_accept_authorization(self, mailfrom, sender, token):
 		""" Accept authorization token and subscribe user to the list. """
 		# Get authorization from database.
 		sql = f"SELECT maillist, subscriptor FROM authorization WHERE authorization='{token}';"
 		row = self.cursor(sql).fetchone()
 		if row is None:
-			self.send_template('no-reply@'+self.arguments['domain'], self.arguments['sender'], "error")
+			self.send_template(mailfrom, sender, "error")
 		else:
-			# Act on behalf the original requester.
-			self.arguments['maillist'] = row[0]
-			self.arguments['sender'] = row[1]
 			self.subscribe(row[0], row[1])
 
 	def unsubscribe(self, maillist, address):
@@ -282,16 +281,16 @@ class SimpleList:
 		row = self.cursor(sql).fetchone()
 		return row[0]
 
-	def send_mail(self, sender, address, body):
+	def send_mail(self, mailfrom, address, body):
 		""" Sends and email through the MTA """
-		self.dprint(5, f"Sending email from:{sender} to:{address}")
+		self.dprint(5, f"Sending email from:{mailfrom} to:{address}")
 		self.dprint(6, f"MTA connection: {self.mta}")
 		server = smtplib.SMTP(self.mta['host'], self.mta['port'])
 		server.set_debuglevel(self.debug_level >= 7)
-		server.sendmail(sender, address, body)
+		server.sendmail(mailfrom, address, body)
 		server.quit()
 
-	def send_template(self, sender, address, template, replacements={}):
+	def send_template(self, mailfrom, address, template, replacements={}):
 		""" Sends a template email to comunicate commands information """
 		template_file = self.mta['templates'] + f"/{template}.eml"
 		self.dprint(6, f"Opening template {template_file}")
@@ -303,7 +302,7 @@ class SimpleList:
 				template = template.replace("{"+key+"}", str(value))
 			template = template + "\n\n" + ('-'*80)
 			template = template + "\nMake your mail lists simply with Simplelist\n"
-			self.send_mail(sender, address, template)
+			self.send_mail(mailfrom, address, template)
 
 	def generate_token(self):
 		""" Generate a random token """
