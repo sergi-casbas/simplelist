@@ -74,23 +74,23 @@ class SimpleList:
 	def extract_command_and_maillist(self, arguments):
 		""" Extract command and maillist name from arguments """
 		command = self.arguments['local'].split("-", 1)[0]
-		if command in 'help':
-			maillist = arguments['local']+'@'+arguments['domain']
-		elif command in 'unsubscribe, subscribe, members':
+		local = arguments['local']
+		domain = arguments['domain']
+		maillist = f"{local}@{domain}" # Default maillist
+
+		if command in 'unsubscribe, subscribe, members':
 			try:
-				maillist = arguments['local'].split("-", 1)[1]+'@'+arguments['domain']
+				maillist = local.split("-", 1)[1]+f'@{domain}'
 			except IndexError:
 				command = 'error'
-				maillist = arguments['local']+'@'+arguments['domain']
 		elif command in 'grant':
 			try:
-				maillist = arguments['local'].split("-", 1)[1]
+				maillist = local.split("-", 1)[1]
 			except IndexError:
 				command = 'error'
-				maillist = arguments['local']+'@'+arguments['domain']
 		else:
-			command = 'forward'
-			maillist = arguments['local']+'@'+arguments['domain']
+			if command not in 'help':
+				command = 'forward'
 
 		# Store values to class level dictionary
 		self.arguments['maillist'] = maillist
@@ -104,7 +104,7 @@ class SimpleList:
 		# Extract if exist the command from the local argument.
 		command, maillist = self.extract_command_and_maillist(self.arguments)
 		arguments = self.arguments
-		
+
 		# Read body and store on global arguments
 		body  = mailbody.read()
 		self.arguments['body'] = body
