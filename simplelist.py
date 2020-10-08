@@ -98,10 +98,6 @@ class SimpleList:
 			if command not in 'help':
 				command = 'forward'
 
-		# Store values to class level dictionary
-		self.arguments['maillist'] = maillist
-		self.arguments['command'] = command
-
 		# Return both values
 		return command, maillist
 
@@ -109,7 +105,8 @@ class SimpleList:
 		""" Main proceure orchestrator """
 		# Extract if exist the command and maillist from the local argument.
 		command, maillist = self.extract_command_and_maillist(self.arguments)
-		arguments = self.arguments
+		self.arguments['command'] = command
+		self.arguments['maillist'] = maillist
 
 		# Read body and store on global arguments.
 		self.arguments['body']  = mailbody.read()
