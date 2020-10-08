@@ -140,7 +140,7 @@ class SimpleList:
 		sender = arguments['sender']
 
 		# Bouncing protection with auto-reply #1
-		if "Auto-Submitted:" in body and  "Auto-Submitted: no" not in body:
+		if "Auto-Submitted:" in body and "Auto-Submitted: no" not in body:
 			self.dprint(4, "Auto-Submitted message, ignore it")
 			return 0 # If is a auto-submited ignoring it.
 		if "Auto-Generated:" in body and "Auto-Generated: no" not in body:
