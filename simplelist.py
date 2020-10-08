@@ -204,7 +204,7 @@ class SimpleList:
 
 	def subscribe_request_authorization(self, maillist, address):
 		""" Request admin authorization to subscribe if required """
-		if not self.check_private(maillist):
+		if not self.get_maillist_dbsetting(maillist,'require_subscription_auth'):
 			self.subscribe(maillist, address)
 		#TODO Subscripcion delegada desde cuenta de administrador.
 		# elif Mirar que address sea admin de la llista.
@@ -225,10 +225,7 @@ class SimpleList:
 			self.execute(sql)
 
 			# Get admin mail address.
-			# TODO Convert as function to reuse
-			sql = f"SELECT administrator FROM private WHERE maillist='{maillist}';"
-			row = self.cursor(sql).fetchone()
-			administrator = row[0]
+			administrator = self.get_maillist_dbsetting(maillist, "administrator")
 
 			# Send notification to the admin.
 			self.send_template(maillist, f"{administrator}", "authorization", {'token': token})
@@ -275,10 +272,11 @@ class SimpleList:
 		for row in cursor.fetchall():
 			self.send_mail(maillist, row["subscriptor"], headers + body)
 
-	def check_private(self, maillist):
-		""" Check if a maillist is declared private in the database """
-		sql = f"SELECT count(*)=1 FROM private WHERE maillist='{maillist}';"
-		return self.cursor(sql).fetchone()[0]
+	def get_maillist_dbsetting(self, maillist, setting):
+		""" Recover a settings from the database, if not exists always return None """
+		sql = f"SELECT * FROM maillists WHERE maillist='{maillist}';"
+		settings = self.cursor(sql).fetchone()
+		return None if settings is None else settings[setting]
 
 	def check_membership(self, maillist, address):
 		""" Check if a addres exists in a maillist. """
