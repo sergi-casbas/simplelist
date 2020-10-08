@@ -27,6 +27,13 @@ import secrets
 from lib import smtplib
 from lib.debug import dprint
 
+def dict_factory(cursor, row):
+	""" Function to access database rows by name """
+	results = {}
+	for idx, col in enumerate(cursor.description):
+		results[col[0]] = row[idx]
+	return results
+
 class SimpleList:
 	""" Main class """
 	def __init__(self, sys_arguments):
@@ -165,6 +172,7 @@ class SimpleList:
 		if database['rdms'] == "sqlite":
 			self.dprint(6, "Connection to database sqlite://" + database['path'])
 			connection = sqlite3.connect(database['path'])
+			connection.row_factory = dict_factory
 		else:
 			raise ValueError('Wrong RDMS engine selected', database['rdms'])
 		return connection
@@ -234,7 +242,7 @@ class SimpleList:
 		if row is None:
 			self.send_template(mailfrom, sender, "error")
 		else:
-			self.subscribe(row[0], row[1])
+			self.subscribe("maillist", "subscriptor")
 
 	def unsubscribe(self, maillist, address):
 		""" Remove the requester from the maillist """
@@ -248,7 +256,7 @@ class SimpleList:
 		sql = f"SELECT subscriptor FROM subscriptions WHERE maillist = '{maillist}' ORDER BY subscriptor;"
 		subscriptors = []
 		for row in self.cursor(sql).fetchall():
-			subscriptors.append(row[0])
+			subscriptors.append(row["subscriptor"])
 		self.send_template(maillist, address, "members", {'members': '\n'.join(subscriptors)})
 
 	def forward(self, maillist, address, body):
@@ -265,7 +273,7 @@ class SimpleList:
 		headers = headers + f"List-Unsubscribe: <mailto: unsubscribe-{maillist}>\n"
 
 		for row in cursor.fetchall():
-			self.send_mail(maillist, row[0], headers + body)
+			self.send_mail(maillist, row["subscriptor"], headers + body)
 
 	def check_private(self, maillist):
 		""" Check if a maillist is declared private in the database """
@@ -275,10 +283,10 @@ class SimpleList:
 	def check_membership(self, maillist, address):
 		""" Check if a addres exists in a maillist. """
 		self.dprint(6, 'Checking membership')
-		sql = "SELECT count(*)=1 FROM subscriptions WHERE " + \
+		sql = "SELECT count(*)=1 as membership FROM subscriptions WHERE " + \
 			f"maillist = '{maillist}' and subscriptor='{address}';"
 		row = self.cursor(sql).fetchone()
-		return row[0]
+		return row["membership"]
 
 	def send_mail(self, mailfrom, address, body):
 		""" Sends and email through the MTA """
