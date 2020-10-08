@@ -121,7 +121,6 @@ class SimpleList:
 			self.dprint(4, "Auto-Generated message, ignore it")
 			return 0 # If is a auto-submited ignoring it.
 
-		# TODO Confusing code, needs refactor.
 		# Execute required validations and operations.
 		self.dprint(5, f"Executing {command} command")
 		if command in 'help, error':
@@ -144,7 +143,7 @@ class SimpleList:
 			if self.check_membership(maillist, sender):
 				self.forward(maillist, sender, body)
 			else:
-				self.send_template(f'no-reply@{domain}', sender, "error")
+				self.send_template(mailfrom, sender, "error")
 
 		# Commit any pending operation in the database.
 		self.connection.commit()
@@ -350,7 +349,6 @@ def run_unit_test(sender, local, domain, bodyfilepath):
 	argv = sys.argv + [f"--sender={sender}", f"--local={local}", f"--domain={domain}"]
 	procesor = SimpleList(argv)
 	procesor.main(open(bodyfilepath, "rt"))
-	time.sleep(1)
 
 if __name__ == '__main__':
 	if '--unit-tests' in sys.argv:
