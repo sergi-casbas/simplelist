@@ -101,6 +101,25 @@ class SimpleList:
 		# Return both values
 		return command, maillist
 
+	def extract_headers_and_message(self, body):
+		""" Extract headers and messages from email body"""
+		headers = {}
+		message = []
+
+		on_headers = True
+		for line in body.split("\n"):
+			if on_headers and line.find(":")>0:
+				fields = line.split(":")
+				# Keys are always lowercase, and values striped.
+				headers[fields[0].lower()]=fields[1].strip()
+			else:
+				on_headers = False # once on body, never come back.
+				message.append(line.strip())
+
+		# Return values.
+		return headers, "\n".join(message)
+
+
 	def main(self, mailbody):
 		""" Main proceure orchestrator """
 		# Extract if exist the command and maillist from the local argument.
@@ -108,11 +127,14 @@ class SimpleList:
 		self.arguments['command'] = command
 		self.arguments['maillist'] = maillist
 
-		# Read body and store on global arguments.
-		self.arguments['body']  = mailbody.read()
-		body = self.arguments['body']
+		# Extract headers and body message.
+		body = mailbody.read()
+		headers, message = self.extract_headers_and_message(body)
+		self.arguments['headers'] = headers
+		self.arguments['message'] = message
 
 		# Store other usefull arguments.
+		arguments = self.arguments
 		domain = arguments['domain']
 		mailfrom = f'no-reply@{domain}'
 		sender = arguments['sender']
