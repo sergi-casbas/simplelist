@@ -119,7 +119,6 @@ class SimpleList:
 		# Return values.
 		return headers, "\n".join(message)
 
-
 	def main(self, mailbody):
 		""" Main proceure orchestrator """
 		# Extract if exist the command and maillist from the local argument.
@@ -166,7 +165,14 @@ class SimpleList:
 			else:
 				self.send_template(mailfrom, sender, "error")
 		else:
-			if self.check_membership(maillist, sender):
+			if self.get_maillist_dbsetting(maillist, "bounce_list"):
+				self.forward(maillist, sender, body)
+			elif self.get_maillist_dbsetting(maillist, "distribution_list"):
+				if sender == self.get_maillist_dbsetting(maillist, "administrator"):
+					self.forward(maillist, sender, body)
+				else:
+					self.send_template(mailfrom, sender, "error")
+			elif self.check_membership(maillist, sender):
 				self.forward(maillist, sender, body)
 			else:
 				self.send_template(mailfrom, sender, "error")
@@ -350,8 +356,8 @@ def run_normal():
 def run_unit_tests():
 	# Dummy smtp server: python -m smtpd -c DebuggingServer -n localhost:2525
 	""" Execute unit tests included in this code. Usefull to debug """
-	vfrom = "me@dummy.domain"
 	domain = "lists.dummy.domain"
+	vfrom = f"me@{domain}"
 	run_unit_test(vfrom, "subscribe", domain, "./unit-test/empty.eml")
 	run_unit_test(vfrom, "help", domain, "./unit-test/empty.eml")
 	run_unit_test(vfrom, "help-me", domain, "./unit-test/empty.eml")
@@ -362,12 +368,15 @@ def run_unit_tests():
 	run_unit_test(vfrom, "unit-test", domain, "./unit-test/body-auto-generated-no.eml")
 	run_unit_test(vfrom, "unit-test", domain, "./unit-test/body-auto-generated.eml")
 	run_unit_test(vfrom, "unit-test", domain, "./unit-test/body-auto-submitted.eml")
-	run_unit_test("alter.ego@dummy.domain", "subscribe-unit-test", domain, "./unit-test/empty.eml")
+	run_unit_test(f"alter.ego@{domain}", "subscribe-unit-test", domain, "./unit-test/empty.eml")
 	run_unit_test(vfrom, "members-unit-test", domain, "./unit-test/empty.eml")
-	run_unit_test("inexistent@dummy.domain", "members-unit-test", domain, "./unit-test/empty.eml")
+	run_unit_test(f"inexistent@{domain}", "members-unit-test", domain, "./unit-test/empty.eml")
 	run_unit_test(vfrom, "grant-00000000", domain, "./unit-test/empty.eml")
 	run_unit_test(vfrom, "subscribe-private", domain, "./unit-test/empty.eml")
 	run_unit_test(vfrom, "grant-ffffffff", domain, "./unit-test/empty.eml")
+	run_unit_test(f"inexistent@{domain}", "bounce_list", domain, "./unit-test/empty.eml")
+	run_unit_test(f"inexistent@{domain}", "distribution_list", domain, "./unit-test/empty.eml")
+	run_unit_test(f"admin@{domain}", "distribution_list", domain, "./unit-test/empty.eml")
 
 def run_unit_test(sender, local, domain, bodyfilepath):
 	""" Run unitary test """
