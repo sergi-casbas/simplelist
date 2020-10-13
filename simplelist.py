@@ -27,6 +27,13 @@ import secrets
 from lib import smtplib
 from lib.debug import dprint
 
+def dict_factory(cursor, row):
+	""" Function to access database rows by name """
+	results = {}
+	for idx, col in enumerate(cursor.description):
+		results[col[0]] = row[idx]
+	return results
+
 class SimpleList:
 	""" Main class """
 	def __init__(self, sys_arguments):
@@ -70,71 +77,105 @@ class SimpleList:
 		self.mta = self.configs['mta']
 		self.mta['domain'] = self.arguments['domain']
 
-	def dprint(self, level, debug_message): # TODO Improve as class.
-		"""" Call external class dprint function """
-		#import logging
-		#logging.basicConfig(level=logging.DEBUG)
-		#logging.debug(debug_message)
-		dprint(self.debug_level, level, debug_message)
+	def extract_command_and_maillist(self, arguments):
+		""" Extract command and maillist name from arguments """
+		command = self.arguments['local'].split("-", 1)[0]
+		local = arguments['local']
+		domain = arguments['domain']
+		maillist = f"{local}@{domain}" # Default maillist
+
+		if command in 'unsubscribe, subscribe, members':
+			try:
+				maillist = local.split("-", 1)[1]+f'@{domain}'
+			except IndexError:
+				command = 'error'
+		elif command in 'grant':
+			try:
+				maillist = local.split("-", 1)[1]
+			except IndexError:
+				command = 'error'
+		else:
+			if command not in 'help':
+				command = 'forward'
+
+		# Return both values
+		return command, maillist
+
+	def extract_headers_and_message(self, body):
+		""" Extract headers and messages from email body"""
+		headers = {}
+		message = []
+
+		on_headers = True
+		for line in body.split("\n"):
+			if on_headers and line.find(":")>0:
+				fields = line.split(":")
+				# Keys are always lowercase, and values striped.
+				headers[fields[0].lower()]=fields[1].strip()
+			else:
+				on_headers = False # once on body, never come back.
+				message.append(line.strip())
+
+		# Return values.
+		return headers, "\n".join(message)
 
 	def main(self, mailbody):
 		""" Main proceure orchestrator """
-		# Extract if exist the command from the local argument.
-		arguments = self.arguments
-		arguments['command'] = arguments['local'].split("-", 1)[0]
-		if arguments['command'] in 'help':
-			arguments['maillist'] = arguments['local']+'@'+arguments['domain']
-		elif arguments['command'] in 'unsubscribe, subscribe, members':
-			try:
-				arguments['maillist'] = arguments['local'].split("-", 1)[1]+'@'+arguments['domain']
-			except IndexError:
-				arguments['command'] = 'error'
-				arguments['maillist'] = arguments['local']+'@'+arguments['domain']
-		elif arguments['command'] in 'grant':
-			try:
-				arguments['maillist'] = arguments['local'].split("-", 1)[1]
-			except IndexError:
-				arguments['command'] = 'error'
-				arguments['maillist'] = arguments['local']+'@'+arguments['domain']
-		else:
-			arguments['command'] = 'forward'
-			arguments['maillist'] = arguments['local']+'@'+arguments['domain']
-		arguments['body'] = mailbody.read()
+		# Extract if exist the command and maillist from the local argument.
+		command, maillist = self.extract_command_and_maillist(self.arguments)
+		self.arguments['command'] = command
+		self.arguments['maillist'] = maillist
 
-		# TODO white and blacklists. #2 i #3
+		# Extract headers and body message.
+		body = mailbody.read()
+		headers, message = self.extract_headers_and_message(body)
+		self.arguments['headers'] = headers
+		self.arguments['message'] = message
+
+		# Store other usefull arguments.
+		arguments = self.arguments
+		domain = arguments['domain']
+		mailfrom = f'no-reply@{domain}'
+		sender = arguments['sender']
 
 		# Bouncing protection with auto-reply #1
-		if "Auto-Submitted:" in arguments['body'] and  "Auto-Submitted: no" not in arguments['body']:
+		if "Auto-Submitted:" in body and "Auto-Submitted: no" not in body:
 			self.dprint(4, "Auto-Submitted message, ignore it")
 			return 0 # If is a auto-submited ignoring it.
-		if "Auto-Generated:" in arguments['body'] and "Auto-Generated: no" not in arguments['body']:
+		if "Auto-Generated:" in body and "Auto-Generated: no" not in body:
 			self.dprint(4, "Auto-Generated message, ignore it")
 			return 0 # If is a auto-submited ignoring it.
 
-		# TODO Confusing code, needs refactor.
 		# Execute required validations and operations.
-		self.dprint(5, f"Executing {arguments['command']} command")
-		if arguments['command'] in 'help, error':
-			self.send_template('no-reply@'+arguments['domain'], arguments['sender'], arguments['command'])
-		elif arguments['command'] == 'unsubscribe':
-			if self.check_membership(arguments['maillist'], arguments['sender']):
-				self.unsubscribe(arguments['maillist'], arguments['sender'])
+		self.dprint(5, f"Executing {command} command")
+		if command in 'help, error':
+			self.send_template(mailfrom, sender, command)
+		elif command == 'unsubscribe':
+			if self.check_membership(maillist, sender):
+				self.unsubscribe(maillist, sender)
 			else:
-				self.send_template('no-reply@'+arguments['domain'], arguments['sender'], "error")
-		elif arguments['command'] == 'subscribe':
-			self.subscribe_request_authorization(arguments['maillist'], arguments['sender'])
-		elif arguments['command'] == 'grant':
-			self.subscribe_accept_authorization(arguments['maillist'])
-		elif arguments['command'] == 'members':
-			if self.check_membership(arguments['maillist'], arguments['sender']):
-				self.members(arguments['maillist'], arguments['sender'])
+				self.send_template(mailfrom, sender, "error")
+		elif command == 'subscribe':
+			self.subscribe_request_authorization(maillist, sender)
+		elif command == 'grant':
+			self.subscribe_accept_authorization(mailfrom, sender, maillist)
+		elif command == 'members':
+			if self.check_membership(maillist, sender):
+				self.members(maillist, sender)
 			else:
-				self.send_template('no-reply@'+arguments['domain'], arguments['sender'], "error")
+				self.send_template(mailfrom, sender, "error")
 		else:
-			if self.check_membership(arguments['maillist'], arguments['sender']):
-				self.forward(arguments['maillist'], arguments['sender'], arguments['body'])
+			if self.get_maillist_dbsetting(maillist, "bounce_list"):
+				self.forward(maillist, sender, body)
+			elif self.get_maillist_dbsetting(maillist, "distribution_list"):
+				if sender == self.get_maillist_dbsetting(maillist, "administrator"):
+					self.forward(maillist, sender, body)
+				else:
+					self.send_template(mailfrom, sender, "error")
+			elif self.check_membership(maillist, sender):
+				self.forward(maillist, sender, body)
 			else:
-				self.send_template('no-reply@'+arguments['domain'], arguments['sender'], "error")
+				self.send_template(mailfrom, sender, "error")
 
 		# Commit any pending operation in the database.
 		self.connection.commit()
@@ -156,6 +197,7 @@ class SimpleList:
 		if database['rdms'] == "sqlite":
 			self.dprint(6, "Connection to database sqlite://" + database['path'])
 			connection = sqlite3.connect(database['path'])
+			connection.row_factory = dict_factory
 		else:
 			raise ValueError('Wrong RDMS engine selected', database['rdms'])
 		return connection
@@ -187,7 +229,7 @@ class SimpleList:
 
 	def subscribe_request_authorization(self, maillist, address):
 		""" Request admin authorization to subscribe if required """
-		if not self.check_private(maillist):
+		if not self.get_maillist_dbsetting(maillist,'require_subscription_auth'):
 			self.subscribe(maillist, address)
 		#TODO Subscripcion delegada desde cuenta de administrador.
 		# elif Mirar que address sea admin de la llista.
@@ -208,27 +250,21 @@ class SimpleList:
 			self.execute(sql)
 
 			# Get admin mail address.
-			# TODO Convert as function to reuse
-			sql = f"SELECT administrator FROM private WHERE maillist='{maillist}';"
-			row = self.cursor(sql).fetchone()
-			administrator = row[0]
+			administrator = self.get_maillist_dbsetting(maillist, "administrator")
 
 			# Send notification to the admin.
 			self.send_template(maillist, f"{administrator}", "authorization", {'token': token})
 		return 0
 
-	def subscribe_accept_authorization(self, token):
+	def subscribe_accept_authorization(self, mailfrom, sender, token):
 		""" Accept authorization token and subscribe user to the list. """
 		# Get authorization from database.
 		sql = f"SELECT maillist, subscriptor FROM authorization WHERE authorization='{token}';"
 		row = self.cursor(sql).fetchone()
 		if row is None:
-			self.send_template('no-reply@'+self.arguments['domain'], self.arguments['sender'], "error")
+			self.send_template(mailfrom, sender, "error")
 		else:
-			# Act on behalf the original requester.
-			self.arguments['maillist'] = row[0]
-			self.arguments['sender'] = row[1]
-			self.subscribe(row[0], row[1])
+			self.subscribe("maillist", "subscriptor")
 
 	def unsubscribe(self, maillist, address):
 		""" Remove the requester from the maillist """
@@ -242,7 +278,7 @@ class SimpleList:
 		sql = f"SELECT subscriptor FROM subscriptions WHERE maillist = '{maillist}' ORDER BY subscriptor;"
 		subscriptors = []
 		for row in self.cursor(sql).fetchall():
-			subscriptors.append(row[0])
+			subscriptors.append(row["subscriptor"])
 		self.send_template(maillist, address, "members", {'members': '\n'.join(subscriptors)})
 
 	def forward(self, maillist, address, body):
@@ -259,31 +295,32 @@ class SimpleList:
 		headers = headers + f"List-Unsubscribe: <mailto: unsubscribe-{maillist}>\n"
 
 		for row in cursor.fetchall():
-			self.send_mail(maillist, row[0], headers + body)
+			self.send_mail(maillist, row["subscriptor"], headers + body)
 
-	def check_private(self, maillist):
-		""" Check if a maillist is declared private in the database """
-		sql = f"SELECT count(*)=1 FROM private WHERE maillist='{maillist}';"
-		return self.cursor(sql).fetchone()[0]
+	def get_maillist_dbsetting(self, maillist, setting):
+		""" Recover a settings from the database, if not exists always return None """
+		sql = f"SELECT * FROM maillists WHERE maillist='{maillist}';"
+		settings = self.cursor(sql).fetchone()
+		return None if settings is None else settings[setting]
 
 	def check_membership(self, maillist, address):
 		""" Check if a addres exists in a maillist. """
 		self.dprint(6, 'Checking membership')
-		sql = "SELECT count(*)=1 FROM subscriptions WHERE " + \
+		sql = "SELECT count(*)=1 as membership FROM subscriptions WHERE " + \
 			f"maillist = '{maillist}' and subscriptor='{address}';"
 		row = self.cursor(sql).fetchone()
-		return row[0]
+		return row["membership"]
 
-	def send_mail(self, sender, address, body):
+	def send_mail(self, mailfrom, address, body):
 		""" Sends and email through the MTA """
-		self.dprint(5, f"Sending email from:{sender} to:{address}")
+		self.dprint(5, f"Sending email from:{mailfrom} to:{address}")
 		self.dprint(6, f"MTA connection: {self.mta}")
 		server = smtplib.SMTP(self.mta['host'], self.mta['port'])
 		server.set_debuglevel(self.debug_level >= 7)
-		server.sendmail(sender, address, body)
+		server.sendmail(mailfrom, address, body)
 		server.quit()
 
-	def send_template(self, sender, address, template, replacements={}):
+	def send_template(self, mailfrom, address, template, replacements={}):
 		""" Sends a template email to comunicate commands information """
 		template_file = self.mta['templates'] + f"/{template}.eml"
 		self.dprint(6, f"Opening template {template_file}")
@@ -295,7 +332,7 @@ class SimpleList:
 				template = template.replace("{"+key+"}", str(value))
 			template = template + "\n\n" + ('-'*80)
 			template = template + "\nMake your mail lists simply with Simplelist\n"
-			self.send_mail(sender, address, template)
+			self.send_mail(mailfrom, address, template)
 
 	def generate_token(self):
 		""" Generate a random token """
@@ -303,6 +340,13 @@ class SimpleList:
 			return "ffffffff"
 		else:
 			return secrets.token_hex(4)
+
+	def dprint(self, level, debug_message): # TODO Improve as class.
+		"""" Call external class dprint function """
+		#import logging
+		#logging.basicConfig(level=logging.DEBUG)
+		#logging.debug(debug_message)
+		dprint(self.debug_level, level, debug_message)
 
 def run_normal():
 	""" Execute it with normal behaviour """
@@ -312,8 +356,8 @@ def run_normal():
 def run_unit_tests():
 	# Dummy smtp server: python -m smtpd -c DebuggingServer -n localhost:2525
 	""" Execute unit tests included in this code. Usefull to debug """
-	vfrom = "me@dummy.domain"
 	domain = "lists.dummy.domain"
+	vfrom = f"me@{domain}"
 	run_unit_test(vfrom, "subscribe", domain, "./unit-test/empty.eml")
 	run_unit_test(vfrom, "help", domain, "./unit-test/empty.eml")
 	run_unit_test(vfrom, "help-me", domain, "./unit-test/empty.eml")
@@ -324,22 +368,23 @@ def run_unit_tests():
 	run_unit_test(vfrom, "unit-test", domain, "./unit-test/body-auto-generated-no.eml")
 	run_unit_test(vfrom, "unit-test", domain, "./unit-test/body-auto-generated.eml")
 	run_unit_test(vfrom, "unit-test", domain, "./unit-test/body-auto-submitted.eml")
-	run_unit_test("alter.ego@dummy.domain", "subscribe-unit-test", domain, "./unit-test/empty.eml")
+	run_unit_test(f"alter.ego@{domain}", "subscribe-unit-test", domain, "./unit-test/empty.eml")
 	run_unit_test(vfrom, "members-unit-test", domain, "./unit-test/empty.eml")
-	run_unit_test("inexistent@dummy.domain", "members-unit-test", domain, "./unit-test/empty.eml")
+	run_unit_test(f"inexistent@{domain}", "members-unit-test", domain, "./unit-test/empty.eml")
 	run_unit_test(vfrom, "grant-00000000", domain, "./unit-test/empty.eml")
 	run_unit_test(vfrom, "subscribe-private", domain, "./unit-test/empty.eml")
 	run_unit_test(vfrom, "grant-ffffffff", domain, "./unit-test/empty.eml")
+	run_unit_test(f"inexistent@{domain}", "bounce_list", domain, "./unit-test/empty.eml")
+	run_unit_test(f"inexistent@{domain}", "distribution_list", domain, "./unit-test/empty.eml")
+	run_unit_test(f"admin@{domain}", "distribution_list", domain, "./unit-test/empty.eml")
 
 def run_unit_test(sender, local, domain, bodyfilepath):
 	""" Run unitary test """
 	argv = sys.argv + [f"--sender={sender}", f"--local={local}", f"--domain={domain}"]
 	procesor = SimpleList(argv)
 	procesor.main(open(bodyfilepath, "rt"))
-	time.sleep(1)
 
 if __name__ == '__main__':
-	import time
 	if '--unit-tests' in sys.argv:
 		run_unit_tests()
 	else:
